@@ -29,11 +29,11 @@ class ProductImage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.75), color],
+            colors: [color.withValues(alpha: 0.75), color],
           ),
         ),
         child: Center(
-          child: Icon(icon, size: 56, color: Colors.white.withOpacity(0.9)),
+          child: Icon(icon, size: 56, color: Colors.white.withValues(alpha: 0.9)),
         ),
       ),
     );

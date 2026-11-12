@@ -10,7 +10,7 @@ import '../../widgets/wheel_date_picker.dart';
 /// - Belum ada profil -> form langsung bisa diisi, tombol "Simpan Profile" (INSERT)
 /// - Sudah ada profil -> form terkunci (mode lihat), tombol "Ubah Profile"
 ///     tekan "Ubah Profile" -> form terbuka, tombol jadi "Simpan Perubahan" (UPDATE)
-///     "Hapus Akun" selalu tampil; "Batal" muncul saat mode ubah
+///     "Hapus Akun" selalu tampil (tidak ada tombol "Batal")
 class ProfileEdit extends StatefulWidget {
   const ProfileEdit({super.key});
 
@@ -25,10 +25,25 @@ class _ProfileEditState extends State<ProfileEdit> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController peringatanController = TextEditingController();
 
-  static const _kodeNegaraList = ['+62', '+60', '+65'];
+  static const _daftarNegara = [
+    _Negara('🇮🇩', '+62', 'Indonesia'),
+    _Negara('🇵🇭', '+63', 'Philippines'),
+    _Negara('🇬🇧', '+44', 'United Kingdom'),
+    _Negara('🇦🇺', '+61', 'Australia'),
+    _Negara('🇸🇬', '+65', 'Singapore'),
+    _Negara('🇲🇾', '+60', 'Malaysia'),
+    _Negara('🇮🇳', '+91', 'India'),
+    _Negara('🇯🇵', '+81', 'Japan'),
+    _Negara('🇨🇳', '+86', 'China'),
+    _Negara('🇻🇳', '+84', 'Vietnam'),
+    _Negara('🇹🇭', '+66', 'Thailand'),
+    _Negara('🇺🇸', '+1', 'United States of America'),
+    _Negara('🇨🇦', '+1', 'Canada'),
+  ];
   static const _jenisKelaminList = ['Laki-laki', 'Perempuan'];
 
-  String kodeNegara = '+62';
+  _Negara negara = _daftarNegara.first;
+  String get kodeNegara => negara.kode;
   String? jenisKelamin;
   bool detailTambahanTerbuka = false;
 
@@ -37,12 +52,24 @@ class _ProfileEditState extends State<ProfileEdit> {
   bool _menyimpan = false;
 
   String? _namaError;
+  String? _tanggalError;
   String? _teleponError;
   String? _emailError;
 
   static const Color primary = Color(0xFF205681);
-  static const Color border = Color(0xFFDDDDDD);
-  static const Color abuAbu = Color(0xFFF5F5F5);
+  static const Color border = Color(0xFFE6E6E6);
+  static const Color teksInput = Color(0xFF8A8A8A); // teks input agak pudar
+  static const Color hintInput = Color(0xFFB5B5B5);
+  static const Color abuAbu = Color(0xFFF2F2F2);
+
+  // Bayangan tipis supaya kotak input terlihat terang & timbul
+  static final List<BoxShadow> _bayangan = [
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.06),
+      blurRadius: 4,
+      offset: const Offset(0, 1.5),
+    ),
+  ];
 
   // Email yang sudah tersimpan dianggap terverifikasi: disamarkan & terkunci
   bool get _emailTerkunci => (_existing?.email ?? '').isNotEmpty;
@@ -78,11 +105,14 @@ class _ProfileEditState extends State<ProfileEdit> {
     // phone disimpan lengkap dengan kode negara, mis. "+62812345678"
     final phone = p?.phone ?? '';
     var nomor = phone;
-    kodeNegara = '+62';
-    for (final kode in _kodeNegaraList) {
-      if (phone.startsWith(kode)) {
-        kodeNegara = kode;
-        nomor = phone.substring(kode.length);
+    negara = _daftarNegara.first;
+    // Cocokkan kode terpanjang dulu (mis. +62 sebelum +6)
+    final urut = [..._daftarNegara]
+      ..sort((a, b) => b.kode.length.compareTo(a.kode.length));
+    for (final n in urut) {
+      if (phone.startsWith(n.kode)) {
+        negara = n;
+        nomor = phone.substring(n.kode.length);
         break;
       }
     }
@@ -97,6 +127,7 @@ class _ProfileEditState extends State<ProfileEdit> {
         (p?.anniversary ?? '').isNotEmpty;
 
     _namaError = null;
+    _tanggalError = null;
     _teleponError = null;
     _emailError = null;
   }
@@ -124,7 +155,12 @@ class _ProfileEditState extends State<ProfileEdit> {
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
-    if (tanggal != null) tanggalController.text = _formatTanggal(tanggal);
+    if (tanggal != null) {
+      setState(() {
+        tanggalController.text = _formatTanggal(tanggal);
+        _tanggalError = null;
+      });
+    }
   }
 
   Future<void> pilihTanggalPeringatan() async {
@@ -137,7 +173,8 @@ class _ProfileEditState extends State<ProfileEdit> {
     if (tanggal != null) peringatanController.text = _formatTanggal(tanggal);
   }
 
-  Widget label(String teks, {bool info = false}) {
+  /// Label field + ikon "i" kecil. Tekan ikon untuk menampilkan petunjuk.
+  Widget label(String teks, {String? info}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 7),
       child: Row(
@@ -150,23 +187,77 @@ class _ProfileEditState extends State<ProfileEdit> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (info) ...[
-            const SizedBox(width: 6),
-            const Icon(Icons.info_outline, color: Color(0xFF1D607D), size: 16),
+          if (info != null) ...[
+            const SizedBox(width: 4),
+            Tooltip(
+              message: info,
+              triggerMode: TooltipTriggerMode.tap,
+              waitDuration: Duration.zero,
+              showDuration: const Duration(seconds: 3),
+              preferBelow: false,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF555555),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(
+                  Icons.info_outline,
+                  color: Color(0xFF1D607D),
+                  size: 16,
+                ),
+              ),
+            ),
           ],
         ],
       ),
     );
   }
 
-  /// [bisaDiubah] false -> field hanya tampil (abu-abu, tidak bisa diketik/ditekan).
+  /// Pesan peringatan merah dengan ikon di bawah input.
+  Widget pesanError(String? teks) {
+    if (teks == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 2),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Color(0xFFC62828), size: 16),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              teks,
+              style: const TextStyle(color: Color(0xFFC62828), fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// [bisaDiubah] false -> field tidak bisa diketik/ditekan.
+  /// [terkunci] true -> latar abu-abu (dipakai email yang sudah terverifikasi).
   Widget inputField({
     required TextEditingController controller,
     String? hint,
     bool bisaDiubah = true,
+    bool terkunci = false,
     VoidCallback? onTap,
     Widget? prefix,
-    String? errorText,
+    bool adaError = false,
+    ValueChanged<String>? onChanged,
     TextInputType? keyboardType,
   }) {
     OutlineInputBorder garis(Color warna, [double lebar = 1]) =>
@@ -175,30 +266,34 @@ class _ProfileEditState extends State<ProfileEdit> {
           borderSide: BorderSide(color: warna, width: lebar),
         );
 
-    return TextField(
-      controller: controller,
-      readOnly: !bisaDiubah || onTap != null,
-      canRequestFocus: bisaDiubah,
-      onTap: bisaDiubah ? onTap : null,
-      keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 13, color: Colors.black),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: bisaDiubah ? Colors.white : abuAbu,
-        hintText: hint,
-        errorText: errorText,
-        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-        prefixIcon: prefix,
-        prefixIconConstraints:
-            const BoxConstraints(minWidth: 38, minHeight: 40),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
-        border: garis(border),
-        enabledBorder: garis(border),
-        disabledBorder: garis(border),
-        focusedBorder: garis(primary, 1.3),
-        errorBorder: garis(Colors.red),
-        focusedErrorBorder: garis(Colors.red, 1.3),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: terkunci ? null : _bayangan,
+      ),
+      child: TextField(
+        controller: controller,
+        readOnly: !bisaDiubah || onTap != null,
+        canRequestFocus: bisaDiubah,
+        onTap: bisaDiubah ? onTap : null,
+        onChanged: onChanged,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 13, color: teksInput),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: terkunci ? abuAbu : Colors.white,
+          hintText: hint,
+          hintStyle: const TextStyle(color: hintInput, fontSize: 13),
+          prefixIcon: prefix,
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 38, minHeight: 40),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
+          border: garis(adaError ? Colors.red : border),
+          enabledBorder: garis(adaError ? Colors.red : border),
+          disabledBorder: garis(adaError ? Colors.red : border),
+          focusedBorder: garis(adaError ? Colors.red : primary, 1.3),
+        ),
       ),
     );
   }
@@ -211,57 +306,156 @@ class _ProfileEditState extends State<ProfileEdit> {
       alignment: Alignment.centerLeft,
       padding: const EdgeInsets.symmetric(horizontal: 13),
       decoration: BoxDecoration(
-        color: abuAbu,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: border),
+        boxShadow: _bayangan,
       ),
       child: Text(
         teks,
-        style: const TextStyle(fontSize: 13, color: Colors.black),
+        style: const TextStyle(fontSize: 13, color: teksInput),
       ),
     );
   }
 
+  /// Bottom sheet "Pilih Kode Negara" dengan tombol X di atasnya.
+  Future<void> pilihKodeNegara() async {
+    final dipilih = await showModalBottomSheet<_Negara>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final tinggiMaks = MediaQuery.of(sheetContext).size.height * 0.78;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Tombol tutup (X)
+            GestureDetector(
+              onTap: () => Navigator.pop(sheetContext),
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF6B6B6B),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 24),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              constraints: BoxConstraints(maxHeight: tinggiMaks),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 22),
+                      child: Text(
+                        'Pilih Kode Negara',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                        itemCount: _daftarNegara.length,
+                        itemBuilder: (_, i) {
+                          final n = _daftarNegara[i];
+                          final aktif = n == negara;
+                          return Material(
+                            color: aktif
+                                ? const Color(0xFFF2F2F2)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: () => Navigator.pop(sheetContext, n),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 14,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      n.bendera,
+                                      style: const TextStyle(fontSize: 22),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Text(
+                                        '${n.kode}  ${n.nama}',
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                    ),
+                                    if (aktif)
+                                      const Icon(Icons.check, size: 22),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    if (dipilih != null) setState(() => negara = dipilih);
+  }
+
   Widget dropdownKodeNegara(double lebar) {
-    final w = lebar < 340 ? 85.0 : 96.0;
-    if (!_modeEdit) {
-      return _kotakLihat(
-        kodeNegara == '+62' ? '🇮🇩 +62' : kodeNegara,
-        lebar: w,
-      );
-    }
+    final w = lebar < 340 ? 100.0 : 112.0;
+    final isi = Row(
+      children: [
+        Text(negara.bendera, style: const TextStyle(fontSize: 18)),
+        const SizedBox(width: 8),
+        Text(
+          negara.kode,
+          style: const TextStyle(fontSize: 13, color: teksInput),
+        ),
+        const Spacer(),
+        if (_modeEdit)
+          const Icon(Icons.keyboard_arrow_down, size: 20, color: teksInput),
+      ],
+    );
+
     return SizedBox(
       width: w,
       height: 52,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: border),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: kodeNegara,
-            isExpanded: true,
-            iconSize: 18,
-            items: const [
-              DropdownMenuItem(
-                value: '+62',
-                child: Text('🇮🇩 +62', style: TextStyle(fontSize: 12)),
-              ),
-              DropdownMenuItem(
-                value: '+60',
-                child: Text('+60', style: TextStyle(fontSize: 12)),
-              ),
-              DropdownMenuItem(
-                value: '+65',
-                child: Text('+65', style: TextStyle(fontSize: 12)),
-              ),
-            ],
-            onChanged: (value) {
-              if (value != null) setState(() => kodeNegara = value);
-            },
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: border),
+            boxShadow: _bayangan,
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: _modeEdit ? pilihKodeNegara : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: isi,
+            ),
           ),
         ),
       ),
@@ -278,6 +472,7 @@ class _ProfileEditState extends State<ProfileEdit> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: border),
+        boxShadow: _bayangan,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -286,9 +481,9 @@ class _ProfileEditState extends State<ProfileEdit> {
           iconSize: 20,
           hint: const Text(
             'Pilih jenis kelamin',
-            style: TextStyle(color: Colors.grey, fontSize: 13),
+            style: TextStyle(color: hintInput, fontSize: 13),
           ),
-          style: const TextStyle(fontSize: 13, color: Colors.black),
+          style: const TextStyle(fontSize: 13, color: teksInput),
           items: [
             for (final j in _jenisKelaminList)
               DropdownMenuItem(value: j, child: Text(j)),
@@ -307,6 +502,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     final email = emailController.text.trim();
 
     String? errNama;
+    String? errTanggal;
     String? errTelepon;
     String? errEmail;
 
@@ -316,8 +512,14 @@ class _ProfileEditState extends State<ProfileEdit> {
       errNama = 'Nama terlalu pendek';
     }
 
-    if (telepon.isNotEmpty && !RegExp(r'^[0-9]{8,13}$').hasMatch(telepon)) {
-      errTelepon = '8-13 digit angka';
+    if (tanggalController.text.trim().isEmpty) {
+      errTanggal = 'Tanggal lahir diperlukan';
+    }
+
+    if (telepon.isEmpty) {
+      errTelepon = 'Verifikasi nomor telepon diperlukan';
+    } else if (!RegExp(r'^[0-9]{8,13}$').hasMatch(telepon)) {
+      errTelepon = 'Nomor telepon harus 8-13 digit angka';
     }
 
     if (!_emailTerkunci &&
@@ -328,19 +530,17 @@ class _ProfileEditState extends State<ProfileEdit> {
 
     setState(() {
       _namaError = errNama;
+      _tanggalError = errTanggal;
       _teleponError = errTelepon;
       _emailError = errEmail;
     });
-    return errNama == null && errTelepon == null && errEmail == null;
+    return errNama == null &&
+        errTanggal == null &&
+        errTelepon == null &&
+        errEmail == null;
   }
 
   void mulaiUbah() => setState(() => _modeEdit = true);
-
-  /// Batalkan perubahan: kembalikan form ke data di database, lalu kunci lagi.
-  void batalUbah() {
-    _isiForm(_existing);
-    setState(() => _modeEdit = false);
-  }
 
   // CREATE (id null) atau UPDATE (id ada)
   Future<void> simpanProfil() async {
@@ -492,16 +692,6 @@ class _ProfileEditState extends State<ProfileEdit> {
             ),
           ),
         ],
-
-        // BATAL: hanya saat mode ubah, dibuat ringkas (text button)
-        if (adaProfil && _modeEdit)
-          TextButton(
-            onPressed: _menyimpan ? null : batalUbah,
-            child: const Text(
-              'Batal',
-              style: TextStyle(color: primary, fontSize: 14),
-            ),
-          ),
       ],
     );
   }
@@ -561,9 +751,21 @@ class _ProfileEditState extends State<ProfileEdit> {
                           children: [
                             // FOTO PROFIL (huruf pertama nama)
                             Center(
-                              child: CircleAvatar(
-                                radius: 46,
-                                backgroundColor: const Color(0xFFB8E37E),
+                              child: Container(
+                                width: 92,
+                                height: 92,
+                                alignment: Alignment.center,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Color(0xFFE4F5D3),
+                                      Color(0xFFB4E27A),
+                                    ],
+                                  ),
+                                ),
                                 child: Text(
                                   inisial,
                                   style: const TextStyle(
@@ -587,34 +789,45 @@ class _ProfileEditState extends State<ProfileEdit> {
                             const SizedBox(height: 18),
 
                             // NAMA
-                            label('Nama'),
+                            label('Nama', info: 'Mohon masukkan nama lengkap Anda'),
                             inputField(
                               controller: namaController,
                               hint: 'Masukkan nama Anda',
                               bisaDiubah: _modeEdit,
-                              errorText: _namaError,
+                              adaError: _namaError != null,
                             ),
+                            pesanError(_namaError),
 
                             const SizedBox(height: 15),
 
                             // TANGGAL LAHIR
-                            label('Tanggal Lahir', info: true),
+                            label(
+                              'Tanggal Lahir',
+                              info: 'Mohon masukkan tanggal lahir Anda yang '
+                                  'valid dengan format HH-BB-TTTT',
+                            ),
                             inputField(
                               controller: tanggalController,
                               hint: 'DD-MM-YYYY',
                               bisaDiubah: _modeEdit,
                               onTap: pilihTanggal,
+                              adaError: _tanggalError != null,
                               prefix: const Icon(
                                 Icons.calendar_today_outlined,
                                 size: 17,
                                 color: Colors.grey,
                               ),
                             ),
+                            pesanError(_tanggalError),
 
                             const SizedBox(height: 15),
 
                             // NOMOR TELEPON
-                            label('Nomor Telepon', info: true),
+                            label(
+                              'Nomor Telepon',
+                              info: 'Mohon pilih kode negara Anda dan 8-13 '
+                                  'digit nomor telepon yang valid',
+                            ),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -626,22 +839,37 @@ class _ProfileEditState extends State<ProfileEdit> {
                                     hint: '-',
                                     bisaDiubah: _modeEdit,
                                     keyboardType: TextInputType.phone,
-                                    errorText: _teleponError,
+                                    adaError: _teleponError != null,
+                                    prefix: const Icon(
+                                      Icons.info,
+                                      color: Color(0xFFFF9800),
+                                      size: 20,
+                                    ),
+                                    onChanged: (_) {
+                                      if (_teleponError != null) {
+                                        setState(() => _teleponError = null);
+                                      }
+                                    },
                                   ),
                                 ),
                               ],
                             ),
+                            pesanError(_teleponError),
 
                             const SizedBox(height: 15),
 
                             // EMAIL (terkunci kalau sudah tersimpan)
-                            label('Alamat Email'),
+                            label(
+                              'Alamat Email',
+                              info: 'Mohon masukkan alamat email Anda yang valid',
+                            ),
                             inputField(
                               controller: emailController,
                               hint: 'Masukkan Alamat Email',
                               bisaDiubah: _modeEdit && !_emailTerkunci,
+                              terkunci: _emailTerkunci,
                               keyboardType: TextInputType.emailAddress,
-                              errorText: _emailError,
+                              adaError: _emailError != null,
                               prefix: _emailTerkunci
                                   ? const Icon(
                                       Icons.check_circle,
@@ -650,6 +878,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                                     )
                                   : null,
                             ),
+                            pesanError(_emailError),
 
                             const SizedBox(height: 18),
 
@@ -689,12 +918,18 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                             // DETAIL TAMBAHAN: tetap tampil setelah dibuka
                             if (detailTambahanTerbuka) ...[
-                              label('Jenis Kelamin'),
+                              label(
+                                'Jenis Kelamin',
+                                info: 'Mohon masukkan jenis kelamin Anda',
+                              ),
                               dropdownJenisKelamin(),
 
                               const SizedBox(height: 15),
 
-                              label('Peringatan Tahunan'),
+                              label(
+                                'Peringatan Tahunan',
+                                info: 'Mohon pilih tanggal peringatan tahunan Anda',
+                              ),
                               inputField(
                                 controller: peringatanController,
                                 hint: 'Pilih tanggal',
@@ -722,7 +957,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 8,
                         offset: const Offset(0, -3),
                       ),
@@ -742,4 +977,11 @@ class _ProfileEditState extends State<ProfileEdit> {
       ),
     );
   }
+}
+
+class _Negara {
+  final String bendera;
+  final String kode;
+  final String nama;
+  const _Negara(this.bendera, this.kode, this.nama);
 }
