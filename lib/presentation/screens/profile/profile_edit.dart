@@ -20,7 +20,12 @@ class _ProfileEditState extends State<ProfileEdit> {
     text: 'ga****************@******.com',
   );
 
+  final TextEditingController peringatanController = TextEditingController();
+
   String kodeNegara = '+62';
+  String? jenisKelamin;
+
+  bool detailTambahanTerbuka = false;
 
   static const Color primary = Color(0xFF205681);
   static const Color border = Color(0xFFDDDDDD);
@@ -31,6 +36,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     tanggalController.dispose();
     teleponController.dispose();
     emailController.dispose();
+    peringatanController.dispose();
     super.dispose();
   }
 
@@ -44,6 +50,23 @@ class _ProfileEditState extends State<ProfileEdit> {
 
     if (tanggal != null) {
       tanggalController.text =
+          '${tanggal.day.toString().padLeft(2, '0')}-'
+          '${tanggal.month.toString().padLeft(2, '0')}-'
+          '${tanggal.year}';
+    }
+  }
+
+  Future<void> pilihTanggalPeringatan() async {
+    final DateTime? tanggal = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1950),
+      lastDate: DateTime(2100),
+      helpText: 'Pilih tanggal peringatan',
+    );
+
+    if (tanggal != null) {
+      peringatanController.text =
           '${tanggal.day.toString().padLeft(2, '0')}-'
           '${tanggal.month.toString().padLeft(2, '0')}-'
           '${tanggal.year}';
@@ -109,14 +132,48 @@ class _ProfileEditState extends State<ProfileEdit> {
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: border),
           ),
-          disabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: border),
-          ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: primary, width: 1.3),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget dropdownJenisKelamin() {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: jenisKelamin,
+          isExpanded: true,
+          hint: const Text(
+            'Pilih jenis kelamin',
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+          items: const [
+            DropdownMenuItem(
+              value: 'Laki-laki',
+              child: Text('Laki-laki', style: TextStyle(fontSize: 13)),
+            ),
+            DropdownMenuItem(
+              value: 'Perempuan',
+              child: Text('Perempuan', style: TextStyle(fontSize: 13)),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              jenisKelamin = value;
+            });
+          },
         ),
       ),
     );
@@ -201,7 +258,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                   ),
                 ),
 
-                // KONTEN YANG BISA DI-SCROLL
+                // KONTEN SCROLL
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(padding, 15, padding, 20),
@@ -228,7 +285,6 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                             const SizedBox(height: 22),
 
-                            // INFORMASI PRIBADI
                             const Text(
                               'Informasi Pribadi',
                               style: TextStyle(
@@ -344,30 +400,55 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                             const SizedBox(height: 18),
 
-                            // TAMBAHKAN DETAIL LAINNYA
-                            Center(
-                              child: SizedBox(
-                                width: 210,
-                                height: 40,
-                                child: OutlinedButton(
-                                  onPressed: () {},
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.black,
-                                    side: const BorderSide(color: border),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
+                            // TOMBOL TAMBAHKAN DETAIL
+                            if (!detailTambahanTerbuka)
+                              Center(
+                                child: SizedBox(
+                                  width: 210,
+                                  height: 40,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        detailTambahanTerbuka = true;
+                                      });
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.black,
+                                      side: const BorderSide(color: border),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                    child: const Text(
+                                      'Tambahkan detail lainnya',
+                                      style: TextStyle(fontSize: 12),
                                     ),
-                                  ),
-                                  child: const Text(
-                                    'Tambahkan detail lainnya',
-                                    style: TextStyle(fontSize: 12),
                                   ),
                                 ),
                               ),
-                            ),
+
+                            // DUA KOLOM TAMBAHAN
+                            if (detailTambahanTerbuka) ...[
+                              label('Jenis Kelamin'),
+                              dropdownJenisKelamin(),
+
+                              const SizedBox(height: 15),
+
+                              label('Peringatan Tahunan'),
+                              inputField(
+                                controller: peringatanController,
+                                hint: 'Pilih tanggal',
+                                onTap: pilihTanggalPeringatan,
+                                prefix: const Icon(
+                                  Icons.calendar_month_outlined,
+                                  size: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -395,7 +476,6 @@ class _ProfileEditState extends State<ProfileEdit> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // UBAH PROFILE
                           SizedBox(
                             width: double.infinity,
                             height: 48,
@@ -421,7 +501,6 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                           const SizedBox(height: 8),
 
-                          // HAPUS AKUN
                           SizedBox(
                             width: double.infinity,
                             height: 48,
