@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/state/profile_state.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/user_profile.dart';
 import 'profile_edit.dart';
 
 class _MenuRow {
@@ -12,55 +14,77 @@ class _MenuRow {
   const _MenuRow(this.icon, this.color, this.title, [this.trailing]);
 }
 
-// HEADER PROFIL
+// HEADER PROFIL: data dari SQLite, seluruh kartu bisa ditekan
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF7DB4E6), width: 2),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 36,
-            backgroundColor: Color(0xFFB8E37E),
-            child: Text(
-              'T',
-              style: TextStyle(fontSize: 36, color: Color(0xFF3F9A00)),
+    // Rebuild otomatis tiap profil di database berubah (create/update/delete)
+    return ValueListenableBuilder<UserProfile?>(
+      valueListenable: ProfileState.current,
+      builder: (context, profil, _) {
+        final subtitle = profil == null
+            ? '-'
+            : (profil.email ?? '').isNotEmpty
+                ? profil.maskedEmail
+                : ((profil.phone ?? '').isNotEmpty ? profil.phone! : '-');
+
+        return InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileEdit()),
+            );
+          },
+          child: Ink(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF7DB4E6), width: 2),
             ),
-          ),
-
-          const SizedBox(width: 16),
-
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  "Domino's Lovers",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                CircleAvatar(
+                  radius: 36,
+                  backgroundColor: const Color(0xFFB8E37E),
+                  child: Text(
+                    profil?.initial ?? 'T',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      color: Color(0xFF3F9A00),
+                    ),
+                  ),
                 ),
-                Text('-'),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profil?.name ?? "Domino's Lovers",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
               ],
             ),
           ),
-
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileEdit()),
-              );
-            },
-            icon: const Icon(Icons.chevron_right),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
