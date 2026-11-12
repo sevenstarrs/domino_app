@@ -463,7 +463,7 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget dropdownJenisKelamin() {
-    if (!_modeEdit) return _kotakLihat(jenisKelamin ?? '-');
+    if (!_modeEdit) return _kotakLihat(jenisKelamin ?? 'Pilih Jenis Kelamin');
 
     return Container(
       height: 52,
@@ -928,11 +928,11 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                               label(
                                 'Peringatan Tahunan',
-                                info: 'Mohon pilih tanggal peringatan tahunan Anda',
+                                info: 'Mohon pilih tanggal peringatan tahunan dengan format TTTT-BB-HH',
                               ),
                               inputField(
                                 controller: peringatanController,
-                                hint: 'Pilih tanggal',
+                                hint: 'Pilih Tanggal',
                                 bisaDiubah: _modeEdit,
                                 onTap: pilihTanggalPeringatan,
                                 prefix: const Icon(
