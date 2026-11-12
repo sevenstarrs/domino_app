@@ -7,7 +7,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const _dbName = 'dominos.db';
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
   static const tableProfiles = 'profiles';
 
   Database? _db;
@@ -26,11 +26,20 @@ class DatabaseHelper {
             name       TEXT NOT NULL,
             birth_date TEXT,
             phone      TEXT,
-            email      TEXT
+            email      TEXT,
+            gender      TEXT,
+            anniversary TEXT
           )
         ''');
       },
-      // Saat struktur tabel berubah: naikkan _dbVersion lalu isi onUpgrade.
+      // Migrasi: database versi 1 (belum ada gender & anniversary) -> versi 2
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE $tableProfiles ADD COLUMN gender TEXT');
+          await db.execute(
+              'ALTER TABLE $tableProfiles ADD COLUMN anniversary TEXT');
+        }
+      },
     );
   }
 

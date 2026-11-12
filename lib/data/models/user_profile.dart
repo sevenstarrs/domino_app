@@ -3,8 +3,10 @@ class UserProfile {
   final int? id;
   final String name;
   final String? birthDate; // format DD-MM-YYYY
-  final String? phone;
+  final String? phone; // lengkap dengan kode negara, mis. +62812...
   final String? email;
+  final String? gender; // Laki-laki / Perempuan
+  final String? anniversary; // Peringatan Tahunan, format DD-MM-YYYY
 
   const UserProfile({
     this.id,
@@ -12,6 +14,8 @@ class UserProfile {
     this.birthDate,
     this.phone,
     this.email,
+    this.gender,
+    this.anniversary,
   });
 
   UserProfile copyWith({
@@ -20,6 +24,8 @@ class UserProfile {
     String? birthDate,
     String? phone,
     String? email,
+    String? gender,
+    String? anniversary,
   }) =>
       UserProfile(
         id: id ?? this.id,
@@ -27,6 +33,8 @@ class UserProfile {
         birthDate: birthDate ?? this.birthDate,
         phone: phone ?? this.phone,
         email: email ?? this.email,
+        gender: gender ?? this.gender,
+        anniversary: anniversary ?? this.anniversary,
       );
 
   Map<String, Object?> toMap() => {
@@ -35,6 +43,8 @@ class UserProfile {
         'birth_date': birthDate,
         'phone': phone,
         'email': email,
+        'gender': gender,
+        'anniversary': anniversary,
       };
 
   factory UserProfile.fromMap(Map<String, Object?> m) => UserProfile(
@@ -43,6 +53,8 @@ class UserProfile {
         birthDate: m['birth_date'] as String?,
         phone: m['phone'] as String?,
         email: m['email'] as String?,
+        gender: m['gender'] as String?,
+        anniversary: m['anniversary'] as String?,
       );
 
   /// Huruf pertama nama untuk avatar.
