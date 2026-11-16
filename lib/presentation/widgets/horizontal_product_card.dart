@@ -1,11 +1,15 @@
+
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/product.dart';
+import '../../data/cart/cart_manager.dart';
+import '../keranjang/keranjang_screen.dart';
 import 'add_button.dart';
 import 'price_text.dart';
 import 'product_image.dart';
 
-/// Kartu produk untuk list horizontal (Today's Special, Paket Hemat, Paket Party)
+/// Kartu produk untuk list horizontal
+/// (Today's Special, Paket Hemat, Paket Party)
 class HorizontalProductCard extends StatelessWidget {
   final Product product;
   final double width;
@@ -15,6 +19,17 @@ class HorizontalProductCard extends StatelessWidget {
     required this.product,
     this.width = 225,
   });
+
+  void _tambahKeKeranjang(BuildContext context) {
+    CartManager.instance.add(product);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const KeranjangScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,27 +51,41 @@ class HorizontalProductCard extends StatelessWidget {
             width: double.infinity,
           ),
           const SizedBox(height: 12),
-          Text(product.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(
+            product.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(product.description,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textGrey, fontSize: 15)),
+          Text(
+            product.description,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textGrey,
+              fontSize: 15,
+            ),
+          ),
           const SizedBox(height: 6),
-          // SizedBox supaya tinggi area harga konsisten walau tanpa harga coret
           SizedBox(
             height: 46,
             child: Align(
               alignment: Alignment.bottomLeft,
               child: PriceText(
-                  price: product.price, originalPrice: product.originalPrice),
+                price: product.price,
+                originalPrice: product.originalPrice,
+              ),
             ),
           ),
           const Spacer(),
-          const AddButton(expanded: true),
+          AddButton(
+            expanded: true,
+            onPressed: () => _tambahKeKeranjang(context),
+          ),
         ],
       ),
     );

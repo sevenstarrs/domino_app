@@ -1,6 +1,9 @@
+
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/product.dart';
+import '../../data/cart/cart_manager.dart';
+import '../keranjang/keranjang_screen.dart';
 import 'add_button.dart';
 import 'price_text.dart';
 import 'product_image.dart';
@@ -8,7 +11,22 @@ import 'product_image.dart';
 /// Kartu besar di halaman Menu
 class MenuProductCard extends StatelessWidget {
   final Product product;
-  const MenuProductCard({super.key, required this.product});
+
+  const MenuProductCard({
+    super.key,
+    required this.product,
+  });
+
+  void _tambahKeKeranjang(BuildContext context) {
+    CartManager.instance.add(product);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const KeranjangScreen(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,28 +47,46 @@ class MenuProductCard extends StatelessWidget {
             width: double.infinity,
           ),
           const SizedBox(height: 12),
-          Text(product.name,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          Text(
+            product.name,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(product.description,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textGrey, fontSize: 15)),
+          Text(
+            product.description,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textGrey,
+              fontSize: 15,
+            ),
+          ),
           const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               PriceText(
-                  price: product.price, originalPrice: product.originalPrice),
+                price: product.price,
+                originalPrice: product.originalPrice,
+              ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const AddButton(),
+                  AddButton(
+                    onPressed: () => _tambahKeKeranjang(context),
+                  ),
                   if (product.customizable) ...[
                     const SizedBox(height: 6),
-                    const Text('Dapat disesuaikan',
-                        style: TextStyle(color: AppColors.textGrey)),
+                    const Text(
+                      'Dapat disesuaikan',
+                      style: TextStyle(
+                        color: AppColors.textGrey,
+                      ),
+                    ),
                   ],
                 ],
               ),

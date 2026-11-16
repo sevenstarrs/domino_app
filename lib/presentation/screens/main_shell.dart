@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'activity/activity_screen.dart';
 import 'home/home_screen.dart';
@@ -25,7 +26,6 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // IndexedStack menjaga state tiap tab (scroll position, dll)
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
