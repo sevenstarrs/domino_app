@@ -27,8 +27,8 @@ class ProfileHeader extends StatelessWidget {
         final subtitle = profil == null
             ? '-'
             : (profil.email ?? '').isNotEmpty
-                ? profil.maskedEmail
-                : ((profil.phone ?? '').isNotEmpty ? profil.phone! : '-');
+            ? profil.maskedEmail
+            : ((profil.phone ?? '').isNotEmpty ? profil.phone! : '-');
 
         return InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -209,11 +209,14 @@ class ProfileScreen extends StatelessWidget {
                           bottom: BorderSide(color: AppColors.red, width: 1),
                         ),
                       ),
-                      child: Text(
-                        profil == null ? 'Masuk' : 'Keluar',
-                        style: const TextStyle(
-                          color: AppColors.red,
-                          fontSize: 16,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          profil == null ? 'Masuk' : 'Keluar',
+                          style: const TextStyle(
+                            color: AppColors.red,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),

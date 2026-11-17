@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/state/profile_state.dart';
@@ -136,11 +137,11 @@ class _ProfileEditState extends State<ProfileEdit> {
     }
     teleponController.text = nomor;
 
-    emailController.text =
-        (p?.email ?? '').isNotEmpty ? p!.maskedEmail : '';
+    emailController.text = (p?.email ?? '').isNotEmpty ? p!.maskedEmail : '';
 
     // Sekali terbuka, tetap terbuka (juga setelah Batal / Simpan)
-    detailTambahanTerbuka = detailTambahanTerbuka ||
+    detailTambahanTerbuka =
+        detailTambahanTerbuka ||
         (p?.gender ?? '').isNotEmpty ||
         (p?.anniversary ?? '').isNotEmpty;
 
@@ -208,7 +209,13 @@ class _ProfileEditState extends State<ProfileEdit> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (info != null && (_modeEdit || kosong)) ...[
+          if (info != null &&
+              (_modeEdit ||
+                  kosong ||
+                  teks == 'Tanggal Lahir' ||
+                  teks == 'Nomor Telepon' ||
+                  teks == 'Jenis Kelamin' ||
+                  teks == 'Peringatan Tahunan')) ...[
             const SizedBox(width: 4),
             _IkonInfo(pesan: info),
           ],
@@ -275,10 +282,14 @@ class _ProfileEditState extends State<ProfileEdit> {
           hintText: hint,
           hintStyle: const TextStyle(color: hintInput, fontSize: 13),
           prefixIcon: prefix,
-          prefixIconConstraints:
-              const BoxConstraints(minWidth: 38, minHeight: 40),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 13, vertical: 16),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 38,
+            minHeight: 40,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 13,
+            vertical: 16,
+          ),
           border: garis(adaError ? Colors.red : border),
           enabledBorder: garis(adaError ? Colors.red : border),
           disabledBorder: garis(adaError ? Colors.red : border),
@@ -301,10 +312,7 @@ class _ProfileEditState extends State<ProfileEdit> {
         border: Border.all(color: border),
         boxShadow: _bayangan,
       ),
-      child: Text(
-        teks,
-        style: const TextStyle(fontSize: 13, color: teksInput),
-      ),
+      child: Text(teks, style: const TextStyle(fontSize: 13, color: teksInput)),
     );
   }
 
@@ -450,7 +458,9 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget dropdownJenisKelamin() {
-    if (!_modeEdit) return _kotakLihat(jenisKelamin ?? '-');
+    if (!_modeEdit) {
+      return _kotakLihat(jenisKelamin ?? 'Pilih Jenis Kelamin');
+    }
 
     return Container(
       height: 52,
@@ -567,9 +577,8 @@ class _ProfileEditState extends State<ProfileEdit> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _menyimpan = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: $e')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
     }
   }
 
@@ -670,7 +679,9 @@ class _ProfileEditState extends State<ProfileEdit> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: _menyimpan ? null : (_modeEdit ? simpanProfil : mulaiUbah),
+            onPressed: _menyimpan
+                ? null
+                : (_modeEdit ? simpanProfil : mulaiUbah),
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: Colors.white,
@@ -773,219 +784,229 @@ class _ProfileEditState extends State<ProfileEdit> {
                     fit: StackFit.expand,
                     children: [
                       SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(padding, 15, padding, 20),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 480),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // FOTO PROFIL (huruf pertama nama)
-                            Center(
-                              child: Container(
-                                width: 92,
-                                height: 92,
-                                alignment: Alignment.center,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Color(0xFFE4F5D3),
-                                      Color(0xFFB4E27A),
-                                    ],
-                                  ),
-                                ),
-                                child: Text(
-                                  inisial,
-                                  style: const TextStyle(
-                                    fontSize: 43,
-                                    color: Color(0xFF3F9A00),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 22),
-
-                            const Text(
-                              'Informasi Pribadi',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 18),
-
-                            // NAMA
-                            label(
-                              'Nama',
-                              kosong: namaController.text.trim().isEmpty,
-                              info: 'Mohon masukkan nama lengkap Anda',
-                            ),
-                            inputField(
-                              controller: namaController,
-                              hint: 'Masukkan nama Anda',
-                              bisaDiubah: _modeEdit,
-                              adaError: _namaError != null,
-                            ),
-                            pesanError(_namaError),
-
-                            const SizedBox(height: 15),
-
-                            // TANGGAL LAHIR
-                            label(
-                              'Tanggal Lahir',
-                              kosong: tanggalController.text.trim().isEmpty,
-                              info: 'Mohon masukkan tanggal lahir Anda yang '
-                                  'valid dengan format HH-BB-TTTT',
-                            ),
-                            inputField(
-                              controller: tanggalController,
-                              hint: 'DD-MM-YYYY',
-                              bisaDiubah: _modeEdit,
-                              onTap: pilihTanggal,
-                              adaError: _tanggalError != null,
-                              prefix: const Icon(
-                                Icons.calendar_today_outlined,
-                                size: 17,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            pesanError(_tanggalError),
-
-                            const SizedBox(height: 15),
-
-                            // NOMOR TELEPON
-                            label(
-                              'Nomor Telepon',
-                              kosong: teleponController.text.trim().isEmpty,
-                              info: 'Mohon pilih kode negara Anda dan 8-13 '
-                                  'digit nomor telepon yang valid',
-                            ),
-                            Row(
+                        padding: EdgeInsets.fromLTRB(padding, 15, padding, 20),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 480),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                dropdownKodeNegara(lebar),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: inputField(
-                                    controller: teleponController,
-                                    hint: '-',
-                                    bisaDiubah: _modeEdit,
-                                    keyboardType: TextInputType.phone,
-                                    adaError: _teleponError != null,
-                                    prefix: const Icon(
-                                      Icons.info,
-                                      color: Color(0xFFFF9800),
-                                      size: 20,
+                                // FOTO PROFIL (huruf pertama nama)
+                                Center(
+                                  child: Container(
+                                    width: 92,
+                                    height: 92,
+                                    alignment: Alignment.center,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Color(0xFFE4F5D3),
+                                          Color(0xFFB4E27A),
+                                        ],
+                                      ),
                                     ),
-                                    onChanged: (_) {
-                                      if (_teleponError != null) {
-                                        setState(() => _teleponError = null);
-                                      }
-                                    },
+                                    child: Text(
+                                      inisial,
+                                      style: const TextStyle(
+                                        fontSize: 43,
+                                        color: Color(0xFF3F9A00),
+                                      ),
+                                    ),
                                   ),
                                 ),
+
+                                const SizedBox(height: 22),
+
+                                const Text(
+                                  'Informasi Pribadi',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 18),
+
+                                // NAMA
+                                label(
+                                  'Nama',
+                                  kosong: namaController.text.trim().isEmpty,
+                                  info: 'Mohon masukkan nama lengkap Anda',
+                                ),
+                                inputField(
+                                  controller: namaController,
+                                  hint: 'Masukkan nama Anda',
+                                  bisaDiubah: _modeEdit,
+                                  adaError: _namaError != null,
+                                ),
+                                pesanError(_namaError),
+
+                                const SizedBox(height: 15),
+
+                                // TANGGAL LAHIR
+                                label(
+                                  'Tanggal Lahir',
+                                  kosong: tanggalController.text.trim().isEmpty,
+                                  info:
+                                      'Mohon masukkan tanggal lahir Anda yang '
+                                      'valid dengan format HH-BB-TTTT',
+                                ),
+                                inputField(
+                                  controller: tanggalController,
+                                  hint: 'DD-MM-YYYY',
+                                  bisaDiubah: _modeEdit,
+                                  onTap: pilihTanggal,
+                                  adaError: _tanggalError != null,
+                                  prefix: const Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 17,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                pesanError(_tanggalError),
+
+                                const SizedBox(height: 15),
+
+                                // NOMOR TELEPON
+                                label(
+                                  'Nomor Telepon',
+                                  kosong: teleponController.text.trim().isEmpty,
+                                  info:
+                                      'Mohon pilih kode negara Anda dan 8-13 '
+                                      'digit nomor telepon yang valid',
+                                ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    dropdownKodeNegara(lebar),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: inputField(
+                                        controller: teleponController,
+                                        hint: '-',
+                                        bisaDiubah: _modeEdit,
+                                        keyboardType: TextInputType.phone,
+                                        adaError: _teleponError != null,
+                                        prefix: const Icon(
+                                          Icons.info,
+                                          color: Color(0xFFFF9800),
+                                          size: 20,
+                                        ),
+                                        onChanged: (_) {
+                                          if (_teleponError != null) {
+                                            setState(
+                                              () => _teleponError = null,
+                                            );
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                pesanError(_teleponError),
+
+                                const SizedBox(height: 15),
+
+                                // EMAIL (terkunci kalau sudah tersimpan)
+                                label(
+                                  'Alamat Email',
+                                  kosong: emailController.text.trim().isEmpty,
+                                  info: 'Mohon masukkan alamat email Anda yang valid',
+                                ),
+                                inputField(
+                                  controller: emailController,
+                                  hint: 'Masukkan Alamat Email',
+                                  bisaDiubah: _modeEdit && !_emailTerkunci,
+                                  terkunci: _emailTerkunci,
+                                  keyboardType: TextInputType.emailAddress,
+                                  adaError: _emailError != null,
+                                  prefix: _emailTerkunci
+                                      ? const Icon(
+                                          Icons.check_circle,
+                                          color: Color(0xFF62BD16),
+                                          size: 18,
+                                        )
+                                      : null,
+                                ),
+                                pesanError(_emailError),
+
+                                const SizedBox(height: 18),
+
+                                // TOMBOL TAMBAHKAN DETAIL: tampil di mode lihat & ubah,
+                                // hilang setelah ditekan (field-nya tetap tampil)
+                                if (!detailTambahanTerbuka)
+                                  Center(
+                                    child: FractionallySizedBox(
+                                      widthFactor: 0.46,
+                                      child: SizedBox(
+                                        height: 40,
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              detailTambahanTerbuka = true;
+                                            });
+                                          },
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.black,
+                                            side: const BorderSide(
+                                              color: border,
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Tambahkan detail lainnya',
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                // DETAIL TAMBAHAN: tetap tampil setelah dibuka
+                                if (detailTambahanTerbuka) ...[
+                                  label(
+                                    'Jenis Kelamin',
+                                    kosong:
+                                        jenisKelamin == null ||
+                                        jenisKelamin!.isEmpty,
+                                    info: 'Mohon masukkan jenis kelamin Anda',
+                                  ),
+                                  dropdownJenisKelamin(),
+
+                                  const SizedBox(height: 15),
+
+                                  label(
+                                    'Peringatan Tahunan',
+                                    kosong: peringatanController.text
+                                        .trim()
+                                        .isEmpty,
+                                    info: 'Mohon pilih tanggal peringatan tahunan Anda',
+                                  ),
+                                  inputField(
+                                    controller: peringatanController,
+                                    hint: 'Pilih tanggal',
+                                    bisaDiubah: _modeEdit,
+                                    onTap: pilihTanggalPeringatan,
+                                    prefix: const Icon(
+                                      Icons.calendar_month_outlined,
+                                      size: 18,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
-                            pesanError(_teleponError),
-
-                            const SizedBox(height: 15),
-
-                            // EMAIL (terkunci kalau sudah tersimpan)
-                            label(
-                              'Alamat Email',
-                              kosong: emailController.text.trim().isEmpty,
-                              info: 'Mohon masukkan alamat email Anda yang valid',
-                            ),
-                            inputField(
-                              controller: emailController,
-                              hint: 'Masukkan Alamat Email',
-                              bisaDiubah: _modeEdit && !_emailTerkunci,
-                              terkunci: _emailTerkunci,
-                              keyboardType: TextInputType.emailAddress,
-                              adaError: _emailError != null,
-                              prefix: _emailTerkunci
-                                  ? const Icon(
-                                      Icons.check_circle,
-                                      color: Color(0xFF62BD16),
-                                      size: 18,
-                                    )
-                                  : null,
-                            ),
-                            pesanError(_emailError),
-
-                            const SizedBox(height: 18),
-
-                            // TOMBOL TAMBAHKAN DETAIL: tampil di mode lihat & ubah,
-                            // hilang setelah ditekan (field-nya tetap tampil)
-                            if (!detailTambahanTerbuka)
-                              Center(
-                                child: FractionallySizedBox(
-                                  widthFactor: 0.66,
-                                  child: SizedBox(
-                                    height: 40,
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          detailTambahanTerbuka = true;
-                                        });
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.black,
-                                        side: const BorderSide(color: border),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                        ),
-                                      ),
-                                      child: const Text(
-                                        'Tambahkan detail lainnya',
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                            // DETAIL TAMBAHAN: tetap tampil setelah dibuka
-                            if (detailTambahanTerbuka) ...[
-                              label(
-                                'Jenis Kelamin',
-                                kosong: jenisKelamin == null || jenisKelamin!.isEmpty,
-                                info: 'Mohon masukkan jenis kelamin Anda',
-                              ),
-                              dropdownJenisKelamin(),
-
-                              const SizedBox(height: 15),
-
-                              label(
-                                'Peringatan Tahunan',
-                                kosong: peringatanController.text.trim().isEmpty,
-                                info: 'Mohon pilih tanggal peringatan tahunan Anda',
-                              ),
-                              inputField(
-                                controller: peringatanController,
-                                hint: 'Pilih tanggal',
-                                bisaDiubah: _modeEdit,
-                                onTap: pilihTanggalPeringatan,
-                                prefix: const Icon(
-                                  Icons.calendar_month_outlined,
-                                  size: 18,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
                       ),
                       // NOTIFIKASI: tepat di atas tombol bawah
                       Positioned(
@@ -1121,8 +1142,10 @@ class _IkonInfoState extends State<_IkonInfo> {
                 color: Colors.transparent,
                 child: Container(
                   constraints: BoxConstraints(maxWidth: lebarMaks),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -1301,8 +1324,11 @@ class _BenderaPainter extends CustomPainter {
           ..lineTo(0, h)
           ..close();
         c.drawPath(segitiga, _p(_putih));
-        c.drawCircle(Offset(w * 0.16, h / 2), h * 0.08,
-            _p(const Color(0xFFFCD116)));
+        c.drawCircle(
+          Offset(w * 0.16, h / 2),
+          h * 0.08,
+          _p(const Color(0xFFFCD116)),
+        );
         break;
 
       case 'GB':
@@ -1338,24 +1364,28 @@ class _BenderaPainter extends CustomPainter {
 
       case 'MY':
         const biru = Color(0xFF010066);
-        _garisH(
-          c,
-          s,
-          [for (var i = 0; i < 14; i++) i.isEven ? const Color(0xFFCC0001) : _putih],
-        );
+        _garisH(c, s, [
+          for (var i = 0; i < 14; i++)
+            i.isEven ? const Color(0xFFCC0001) : _putih,
+        ]);
         _kotak(c, 0, 0, w * 0.5, h * 0.5, biru);
-        _bulanSabit(c, Offset(w * 0.2, h * 0.25), h * 0.16,
-            const Color(0xFFFFCC00), biru);
-        _bintang(c, Offset(w * 0.34, h * 0.25), h * 0.09,
-            const Color(0xFFFFCC00));
+        _bulanSabit(
+          c,
+          Offset(w * 0.2, h * 0.25),
+          h * 0.16,
+          const Color(0xFFFFCC00),
+          biru,
+        );
+        _bintang(
+          c,
+          Offset(w * 0.34, h * 0.25),
+          h * 0.09,
+          const Color(0xFFFFCC00),
+        );
         break;
 
       case 'IN':
-        _garisH(c, s, const [
-          Color(0xFFFF9933),
-          _putih,
-          Color(0xFF138808),
-        ]);
+        _garisH(c, s, const [Color(0xFFFF9933), _putih, Color(0xFF138808)]);
         c.drawCircle(
           Offset(w / 2, h / 2),
           h * 0.11,
@@ -1367,7 +1397,11 @@ class _BenderaPainter extends CustomPainter {
 
       case 'JP':
         _kotak(c, 0, 0, w, h, _putih);
-        c.drawCircle(Offset(w / 2, h / 2), h * 0.3, _p(const Color(0xFFBC002D)));
+        c.drawCircle(
+          Offset(w / 2, h / 2),
+          h * 0.3,
+          _p(const Color(0xFFBC002D)),
+        );
         break;
 
       case 'CN':
@@ -1405,11 +1439,10 @@ class _BenderaPainter extends CustomPainter {
         break;
 
       case 'US':
-        _garisH(
-          c,
-          s,
-          [for (var i = 0; i < 13; i++) i.isEven ? const Color(0xFFB22234) : _putih],
-        );
+        _garisH(c, s, [
+          for (var i = 0; i < 13; i++)
+            i.isEven ? const Color(0xFFB22234) : _putih,
+        ]);
         _kotak(c, 0, 0, w * 0.42, h * 7 / 13, const Color(0xFF3C3B6E));
         for (var baris = 0; baris < 4; baris++) {
           for (var kol = 0; kol < 5; kol++) {
