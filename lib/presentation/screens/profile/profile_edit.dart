@@ -43,7 +43,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     _Negara('US', '+1', 'United States of America'),
     _Negara('CA', '+1', 'Canada'),
   ];
-  static const _jenisKelaminList = ['Laki-laki', 'Perempuan'];
+ static const _jenisKelaminList = ['Pria', 'Perempuan', 'Lainnya'];
 
   String? _notif; // teks notifikasi sukses di atas tombol
   Timer? _notifTimer;
@@ -51,6 +51,7 @@ class _ProfileEditState extends State<ProfileEdit> {
   _Negara negara = _daftarNegara.first;
   String get kodeNegara => negara.kode;
   String? jenisKelamin;
+  bool _pilihanGenderTerbuka = false; // daftar pilihan jenis kelamin sedang terbuka
   bool detailTambahanTerbuka = false;
 
   UserProfile? _existing; // null = belum ada profil di database
@@ -300,7 +301,7 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   /// Kotak teks statis untuk mode lihat (dipakai dropdown).
-  Widget _kotakLihat(String teks, {double? lebar}) {
+  Widget _kotakLihat(String teks, {double? lebar, bool hint = false}) {
     return Container(
       width: lebar,
       height: 52,
@@ -312,7 +313,10 @@ class _ProfileEditState extends State<ProfileEdit> {
         border: Border.all(color: border),
         boxShadow: _bayangan,
       ),
-      child: Text(teks, style: const TextStyle(fontSize: 13, color: teksInput)),
+      child: Text(
+        teks,
+        style: TextStyle(fontSize: 13, color: hint ? hintInput : teksInput),
+      ),
     );
   }
 
@@ -458,34 +462,115 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget dropdownJenisKelamin() {
-    if (!_modeEdit) {
-      return _kotakLihat(jenisKelamin ?? 'Pilih Jenis Kelamin');
-    }
+    final kosong = jenisKelamin == null || jenisKelamin!.isEmpty;
+    final teksPilihan = kosong ? 'Pilih Jenis Kelamin' : jenisKelamin!;
 
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 13),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border),
-        boxShadow: _bayangan,
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: jenisKelamin,
-          isExpanded: true,
-          iconSize: 20,
-          hint: const Text(
-            'Pilih jenis kelamin',
-            style: TextStyle(color: hintInput, fontSize: 13),
+    // Mode lihat: kotak statis, warna teks sama dengan mode ubah
+    if (!_modeEdit) return _kotakLihat(teksPilihan, hint: kosong);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Kotak pilihan: tekan untuk buka / tutup daftar
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(
+            () => _pilihanGenderTerbuka = !_pilihanGenderTerbuka,
           ),
-          style: const TextStyle(fontSize: 13, color: teksInput),
-          items: [
-            for (final j in _jenisKelaminList)
-              DropdownMenuItem(value: j, child: Text(j)),
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 13),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: border),
+              boxShadow: _bayangan,
+            ),
+                        child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                teksPilihan,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: kosong ? hintInput : teksInput,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Daftar pilihan muncul di bawah kotak (animasi buka / tutup)
+        AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: _pilihanGenderTerbuka
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: border),
+                      boxShadow: _bayangan,
+                    ),
+                    child: Column(
+                      children: [
+                        for (final j in _jenisKelaminList) _barisGender(j),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
+    );
+  }
+
+  /// Satu baris pilihan jenis kelamin: teks di kiri, bulatan radio di kanan.
+  Widget _barisGender(String j) {
+    final dipilih = jenisKelamin == j;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() {
+        jenisKelamin = j;
+        _pilihanGenderTerbuka = false; // tutup setelah memilih
+      }),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                j,
+                style: const TextStyle(fontSize: 15, color: Colors.black),
+              ),
+            ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: dipilih ? primary : const Color(0xFFD0D0D0),
+                  width: dipilih ? 1.5 : 1,
+                ),
+              ),
+              child: dipilih
+                  ? Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: primary,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
           ],
-          onChanged: (value) => setState(() => jenisKelamin = value),
         ),
       ),
     );
@@ -860,11 +945,6 @@ class _ProfileEditState extends State<ProfileEdit> {
                                   bisaDiubah: _modeEdit,
                                   onTap: pilihTanggal,
                                   adaError: _tanggalError != null,
-                                  prefix: const Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 17,
-                                    color: Colors.grey,
-                                  ),
                                 ),
                                 pesanError(_tanggalError),
 
@@ -890,10 +970,13 @@ class _ProfileEditState extends State<ProfileEdit> {
                                         bisaDiubah: _modeEdit,
                                         keyboardType: TextInputType.phone,
                                         adaError: _teleponError != null,
-                                        prefix: const Icon(
-                                          Icons.info,
-                                          color: Color(0xFFFF9800),
-                                          size: 20,
+                                        prefix: Padding(
+                                          padding: const EdgeInsets.all(9),
+                                          child: Image.asset(
+                                            'assets/icons/info kuning.png',
+                                            width: 20,
+                                            height: 20,
+                                          ),
                                         ),
                                         onChanged: (_) {
                                           if (_teleponError != null) {
@@ -940,7 +1023,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                                 if (!detailTambahanTerbuka)
                                   Center(
                                     child: FractionallySizedBox(
-                                      widthFactor: 0.46,
+                                      widthFactor: 0.55,
                                       child: SizedBox(
                                         height: 40,
                                         child: OutlinedButton(
@@ -964,7 +1047,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                                           ),
                                           child: const Text(
                                             'Tambahkan detail lainnya',
-                                            style: TextStyle(fontSize: 12),
+                                            style: TextStyle(fontSize: 16),
                                           ),
                                         ),
                                       ),
@@ -993,14 +1076,9 @@ class _ProfileEditState extends State<ProfileEdit> {
                                   ),
                                   inputField(
                                     controller: peringatanController,
-                                    hint: 'Pilih tanggal',
+                                    hint: 'Pilih Tanggal',
                                     bisaDiubah: _modeEdit,
                                     onTap: pilihTanggalPeringatan,
-                                    prefix: const Icon(
-                                      Icons.calendar_month_outlined,
-                                      size: 18,
-                                      color: Colors.grey,
-                                    ),
                                   ),
                                 ],
                               ],
@@ -1196,10 +1274,10 @@ class _IkonInfoState extends State<_IkonInfo> {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: CompositedTransformTarget(
           link: _link,
-          child: const Icon(
-            Icons.info_outline,
-            color: Color(0xFF1D607D),
-            size: 16,
+          child: Image.asset(
+            'assets/icons/informasi.png',
+            width: 16,
+            height: 16, // hapus kalau ikon sudah berwarna asli
           ),
         ),
       ),
