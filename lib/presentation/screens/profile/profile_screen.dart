@@ -195,15 +195,27 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 const SizedBox(width: 90),
 
-                TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    'Masuk',
-                    style: TextStyle(
-                      color: AppColors.red,
-                      fontSize: 16,
-                      decoration: TextDecoration.underline,
-                      decorationColor: AppColors.red,
+                // Teks ikut status akun: belum ada profil / sudah dihapus -> Masuk,
+                // sudah ada profil (akun dibuat & data terisi) -> Keluar
+                ValueListenableBuilder<UserProfile?>(
+                  valueListenable: ProfileState.current,
+                  builder: (context, profil, _) => TextButton(
+                    onPressed: () {},
+                    // Garis bawah dibuat dari border supaya ada jarak ke teks
+                    child: Container(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: AppColors.red, width: 1),
+                        ),
+                      ),
+                      child: Text(
+                        profil == null ? 'Masuk' : 'Keluar',
+                        style: const TextStyle(
+                          color: AppColors.red,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ),

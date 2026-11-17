@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/state/profile_state.dart';
@@ -26,21 +28,24 @@ class _ProfileEditState extends State<ProfileEdit> {
   final TextEditingController peringatanController = TextEditingController();
 
   static const _daftarNegara = [
-    _Negara('🇮🇩', '+62', 'Indonesia'),
-    _Negara('🇵🇭', '+63', 'Philippines'),
-    _Negara('🇬🇧', '+44', 'United Kingdom'),
-    _Negara('🇦🇺', '+61', 'Australia'),
-    _Negara('🇸🇬', '+65', 'Singapore'),
-    _Negara('🇲🇾', '+60', 'Malaysia'),
-    _Negara('🇮🇳', '+91', 'India'),
-    _Negara('🇯🇵', '+81', 'Japan'),
-    _Negara('🇨🇳', '+86', 'China'),
-    _Negara('🇻🇳', '+84', 'Vietnam'),
-    _Negara('🇹🇭', '+66', 'Thailand'),
-    _Negara('🇺🇸', '+1', 'United States of America'),
-    _Negara('🇨🇦', '+1', 'Canada'),
+    _Negara('ID', '+62', 'Indonesia'),
+    _Negara('PH', '+63', 'Philippines'),
+    _Negara('GB', '+44', 'United Kingdom'),
+    _Negara('AU', '+61', 'Australia'),
+    _Negara('SG', '+65', 'Singapore'),
+    _Negara('MY', '+60', 'Malaysia'),
+    _Negara('IN', '+91', 'India'),
+    _Negara('JP', '+81', 'Japan'),
+    _Negara('CN', '+86', 'China'),
+    _Negara('VN', '+84', 'Vietnam'),
+    _Negara('TH', '+66', 'Thailand'),
+    _Negara('US', '+1', 'United States of America'),
+    _Negara('CA', '+1', 'Canada'),
   ];
   static const _jenisKelaminList = ['Laki-laki', 'Perempuan'];
+
+  String? _notif; // teks notifikasi sukses di atas tombol
+  Timer? _notifTimer;
 
   _Negara negara = _daftarNegara.first;
   String get kodeNegara => negara.kode;
@@ -83,10 +88,22 @@ class _ProfileEditState extends State<ProfileEdit> {
     _modeEdit = _existing == null;
     // Huruf avatar ikut berubah saat mengetik nama
     namaController.addListener(() => setState(() {}));
+    // Ikon "i" tiap field hilang begitu field itu terisi
+    for (final c in [
+      tanggalController,
+      teleponController,
+      emailController,
+      peringatanController,
+    ]) {
+      c.addListener(() {
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   @override
   void dispose() {
+    _notifTimer?.cancel();
     namaController.dispose();
     tanggalController.dispose();
     teleponController.dispose();
@@ -100,7 +117,8 @@ class _ProfileEditState extends State<ProfileEdit> {
     namaController.text = p?.name ?? '';
     tanggalController.text = p?.birthDate ?? '';
     peringatanController.text = p?.anniversary ?? '';
-    jenisKelamin = p?.gender;
+    // String kosong dianggap belum diisi (dropdown butuh null, bukan '')
+    jenisKelamin = (p?.gender ?? '').trim().isEmpty ? null : p!.gender;
 
     // phone disimpan lengkap dengan kode negara, mis. "+62812345678"
     final phone = p?.phone ?? '';
@@ -173,8 +191,11 @@ class _ProfileEditState extends State<ProfileEdit> {
     if (tanggal != null) peringatanController.text = _formatTanggal(tanggal);
   }
 
-  /// Label field + ikon "i" kecil. Tekan ikon untuk menampilkan petunjuk.
-  Widget label(String teks, {String? info}) {
+  /// Label field + ikon "i" kecil. Ikon tampil kalau:
+  /// - mode ubah (sudah menekan "Ubah Profile") -> SEMUA field tampil "i", atau
+  /// - mode lihat -> hanya field yang masih kosong ([kosong] true).
+  /// Tekan ikon -> petunjuk muncul di sampingnya.
+  Widget label(String teks, {String? info, bool kosong = true}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 7),
       child: Row(
@@ -187,40 +208,9 @@ class _ProfileEditState extends State<ProfileEdit> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (info != null) ...[
+          if (info != null && (_modeEdit || kosong)) ...[
             const SizedBox(width: 4),
-            Tooltip(
-              message: info,
-              triggerMode: TooltipTriggerMode.tap,
-              waitDuration: Duration.zero,
-              showDuration: const Duration(seconds: 3),
-              preferBelow: false,
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              textStyle: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF555555),
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Icon(
-                  Icons.info_outline,
-                  color: Color(0xFF1D607D),
-                  size: 16,
-                ),
-              ),
-            ),
+            _IkonInfo(pesan: info),
           ],
         ],
       ),
@@ -388,10 +378,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                                 ),
                                 child: Row(
                                   children: [
-                                    Text(
-                                      n.bendera,
-                                      style: const TextStyle(fontSize: 22),
-                                    ),
+                                    _Bendera(n.iso, lebar: 30),
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: Text(
@@ -424,7 +411,7 @@ class _ProfileEditState extends State<ProfileEdit> {
     final w = lebar < 340 ? 100.0 : 112.0;
     final isi = Row(
       children: [
-        Text(negara.bendera, style: const TextStyle(fontSize: 18)),
+        _Bendera(negara.iso, lebar: 26),
         const SizedBox(width: 8),
         Text(
           negara.kode,
@@ -463,7 +450,7 @@ class _ProfileEditState extends State<ProfileEdit> {
   }
 
   Widget dropdownJenisKelamin() {
-    if (!_modeEdit) return _kotakLihat(jenisKelamin ?? 'Pilih Jenis Kelamin');
+    if (!_modeEdit) return _kotakLihat(jenisKelamin ?? '-');
 
     return Container(
       height: 52,
@@ -576,13 +563,7 @@ class _ProfileEditState extends State<ProfileEdit> {
         _modeEdit = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            baru ? 'Profile berhasil disimpan' : 'Profile berhasil diperbarui',
-          ),
-        ),
-      );
+      _tampilNotif(baru ? 'Berhasil disimpan' : 'Berhasil diperbarui');
     } catch (e) {
       if (!mounted) return;
       setState(() => _menyimpan = false);
@@ -590,6 +571,51 @@ class _ProfileEditState extends State<ProfileEdit> {
         SnackBar(content: Text('Gagal menyimpan: $e')),
       );
     }
+  }
+
+  /// Tampilkan notifikasi kuning di atas tombol bawah selama 3 detik.
+  void _tampilNotif(String teks) {
+    _notifTimer?.cancel();
+    setState(() => _notif = teks);
+    _notifTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _notif = null);
+    });
+  }
+
+  Widget _bannerNotif() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: _notif == null
+          ? const SizedBox.shrink(key: ValueKey('notif-kosong'))
+          : Container(
+              key: ValueKey(_notif),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDEED9),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.check, color: Color(0xFF4CAF00), size: 22),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      _notif!,
+                      style: const TextStyle(fontSize: 15, color: Colors.black),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
   }
 
   // DELETE
@@ -621,9 +647,11 @@ class _ProfileEditState extends State<ProfileEdit> {
     if (konfirmasi != true) return;
     await ProfileState.delete();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Akun berhasil dihapus')),
-    );
+    // Tampilkan notifikasi kuning yang sama, tahan sebentar, baru keluar
+    setState(() => _menyimpan = true); // kunci tombol selama notifikasi
+    _tampilNotif('Akun berhasil dihapus');
+    await Future.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
     Navigator.pop(context);
   }
 
@@ -741,7 +769,10 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                 // KONTEN SCROLL
                 Expanded(
-                  child: SingleChildScrollView(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(padding, 15, padding, 20),
                     child: Center(
                       child: ConstrainedBox(
@@ -789,7 +820,11 @@ class _ProfileEditState extends State<ProfileEdit> {
                             const SizedBox(height: 18),
 
                             // NAMA
-                            label('Nama', info: 'Mohon masukkan nama lengkap Anda'),
+                            label(
+                              'Nama',
+                              kosong: namaController.text.trim().isEmpty,
+                              info: 'Mohon masukkan nama lengkap Anda',
+                            ),
                             inputField(
                               controller: namaController,
                               hint: 'Masukkan nama Anda',
@@ -803,6 +838,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                             // TANGGAL LAHIR
                             label(
                               'Tanggal Lahir',
+                              kosong: tanggalController.text.trim().isEmpty,
                               info: 'Mohon masukkan tanggal lahir Anda yang '
                                   'valid dengan format HH-BB-TTTT',
                             ),
@@ -825,6 +861,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                             // NOMOR TELEPON
                             label(
                               'Nomor Telepon',
+                              kosong: teleponController.text.trim().isEmpty,
                               info: 'Mohon pilih kode negara Anda dan 8-13 '
                                   'digit nomor telepon yang valid',
                             ),
@@ -861,6 +898,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                             // EMAIL (terkunci kalau sudah tersimpan)
                             label(
                               'Alamat Email',
+                              kosong: emailController.text.trim().isEmpty,
                               info: 'Mohon masukkan alamat email Anda yang valid',
                             ),
                             inputField(
@@ -920,6 +958,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                             if (detailTambahanTerbuka) ...[
                               label(
                                 'Jenis Kelamin',
+                                kosong: jenisKelamin == null || jenisKelamin!.isEmpty,
                                 info: 'Mohon masukkan jenis kelamin Anda',
                               ),
                               dropdownJenisKelamin(),
@@ -928,11 +967,12 @@ class _ProfileEditState extends State<ProfileEdit> {
 
                               label(
                                 'Peringatan Tahunan',
-                                info: 'Mohon pilih tanggal peringatan tahunan dengan format TTTT-BB-HH',
+                                kosong: peringatanController.text.trim().isEmpty,
+                                info: 'Mohon pilih tanggal peringatan tahunan Anda',
                               ),
                               inputField(
                                 controller: peringatanController,
-                                hint: 'Pilih Tanggal',
+                                hint: 'Pilih tanggal',
                                 bisaDiubah: _modeEdit,
                                 onTap: pilihTanggalPeringatan,
                                 prefix: const Icon(
@@ -946,6 +986,20 @@ class _ProfileEditState extends State<ProfileEdit> {
                         ),
                       ),
                     ),
+                      ),
+                      // NOTIFIKASI: tepat di atas tombol bawah
+                      Positioned(
+                        left: padding,
+                        right: padding,
+                        bottom: 12,
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 480),
+                            child: _bannerNotif(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -980,8 +1034,434 @@ class _ProfileEditState extends State<ProfileEdit> {
 }
 
 class _Negara {
-  final String bendera;
+  final String iso; // kode negara 2 huruf untuk menggambar bendera
   final String kode;
   final String nama;
-  const _Negara(this.bendera, this.kode, this.nama);
+  const _Negara(this.iso, this.kode, this.nama);
+}
+
+/// Ikon "i" kecil. Saat ditekan, petunjuk muncul DI SAMPING ikon
+/// (rata tengah secara vertikal) dan hilang sendiri setelah 3 detik.
+class _IkonInfo extends StatefulWidget {
+  final String pesan;
+  const _IkonInfo({required this.pesan});
+
+  @override
+  State<_IkonInfo> createState() => _IkonInfoState();
+}
+
+class _IkonInfoState extends State<_IkonInfo> {
+  static _IkonInfoState? _aktif; // hanya satu petunjuk terbuka sekaligus
+
+  final LayerLink _link = LayerLink();
+  OverlayEntry? _entry;
+  Timer? _timer;
+
+  ValueNotifier<bool>? _terlihat;
+
+  void _mulaiTimer() {
+    _timer?.cancel();
+    _timer = Timer(const Duration(seconds: 4), _tutup);
+  }
+
+  /// Tutup petunjuk. Normalnya memudar pelan dulu; [langsung] true = tanpa animasi.
+  void _tutup({bool langsung = false}) {
+    _timer?.cancel();
+    final entry = _entry;
+    final terlihat = _terlihat;
+    _entry = null;
+    _terlihat = null;
+    if (identical(_aktif, this)) _aktif = null;
+    if (entry == null) return;
+    if (langsung) {
+      if (entry.mounted) entry.remove();
+      return;
+    }
+    terlihat?.value = false; // mulai memudar
+    Timer(const Duration(milliseconds: 400), () {
+      if (entry.mounted) entry.remove();
+    });
+  }
+
+  void _buka() {
+    if (_entry != null) {
+      _mulaiTimer(); // ditekan lagi -> hitung ulang durasi tampil
+      return;
+    }
+    _aktif?._tutup();
+
+    // Lebar maksimal = sisa ruang di kanan ikon sampai tepi layar
+    final box = context.findRenderObject() as RenderBox;
+    final kanan = box.localToGlobal(Offset(box.size.width, 0)).dx;
+    final lebarLayar = MediaQuery.of(context).size.width;
+    final lebarMaks = (lebarLayar - kanan - 8 - 20).clamp(140.0, 360.0);
+
+    final terlihat = ValueNotifier<bool>(false);
+    _terlihat = terlihat;
+
+    _entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: 0,
+        top: 0,
+        child: CompositedTransformFollower(
+          link: _link,
+          showWhenUnlinked: false,
+          targetAnchor: Alignment.centerRight,
+          followerAnchor: Alignment.centerLeft,
+          offset: const Offset(8, 0),
+          child: IgnorePointer(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: terlihat,
+              builder: (_, tampil, child) => AnimatedOpacity(
+                opacity: tampil ? 1 : 0,
+                duration: Duration(milliseconds: tampil ? 150 : 350),
+                child: child,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  constraints: BoxConstraints(maxWidth: lebarMaks),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    widget.pesan,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF555555),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context).insert(_entry!);
+    _aktif = this;
+    // Fade-in di frame berikutnya, lalu hilang pelan setelah beberapa detik
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      terlihat.value = true;
+    });
+    _mulaiTimer();
+  }
+
+  @override
+  void dispose() {
+    _tutup(langsung: true);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _buka,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: CompositedTransformTarget(
+          link: _link,
+          child: const Icon(
+            Icons.info_outline,
+            color: Color(0xFF1D607D),
+            size: 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bendera digambar manual (kotak berwarna), tanpa emoji / gambar.
+class _Bendera extends StatelessWidget {
+  final String iso;
+  final double lebar;
+  const _Bendera(this.iso, {this.lebar = 28});
+
+  @override
+  Widget build(BuildContext context) {
+    final tinggi = lebar * 2 / 3;
+    return Container(
+      width: lebar,
+      height: tinggi,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(3),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: CustomPaint(
+          size: Size(lebar, tinggi),
+          painter: _BenderaPainter(iso),
+        ),
+      ),
+    );
+  }
+}
+
+class _BenderaPainter extends CustomPainter {
+  final String iso;
+  const _BenderaPainter(this.iso);
+
+  static const _putih = Color(0xFFFFFFFF);
+
+  Paint _p(Color c) => Paint()..color = c;
+
+  void _kotak(Canvas c, double x, double y, double w, double h, Color col) {
+    c.drawRect(Rect.fromLTWH(x, y, w, h), _p(col));
+  }
+
+  /// Garis horizontal berwarna dengan bobot tinggi masing-masing.
+  void _garisH(Canvas c, Size s, List<Color> warna, [List<double>? bobot]) {
+    final b = bobot ?? List.filled(warna.length, 1.0);
+    final total = b.fold<double>(0, (a, e) => a + e);
+    double y = 0;
+    for (var i = 0; i < warna.length; i++) {
+      final tinggi = s.height * b[i] / total;
+      // +0.5 menutup celah antar garis akibat pembulatan
+      _kotak(c, 0, y, s.width, tinggi + 0.5, warna[i]);
+      y += tinggi;
+    }
+  }
+
+  void _bintang(Canvas c, Offset pusat, double r, Color col) {
+    final path = Path();
+    for (var i = 0; i < 10; i++) {
+      final jari = i.isEven ? r : r * 0.4;
+      final sudut = -math.pi / 2 + i * math.pi / 5;
+      final pt = Offset(
+        pusat.dx + jari * math.cos(sudut),
+        pusat.dy + jari * math.sin(sudut),
+      );
+      i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
+    }
+    path.close();
+    c.drawPath(path, _p(col));
+  }
+
+  void _bulanSabit(Canvas c, Offset pusat, double r, Color col, Color latar) {
+    c.drawCircle(pusat, r, _p(col));
+    c.drawCircle(pusat.translate(r * 0.4, 0), r * 0.82, _p(latar));
+  }
+
+  void _unionJack(Canvas c, Rect r) {
+    c.save();
+    c.clipRect(r);
+    c.translate(r.left, r.top);
+    final w = r.width, h = r.height;
+    c.drawRect(Rect.fromLTWH(0, 0, w, h), _p(const Color(0xFF012169)));
+    final putihGaris = _p(_putih)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = h * 0.22;
+    final merahGaris = _p(const Color(0xFFC8102E))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = h * 0.08;
+    for (final g in [putihGaris, merahGaris]) {
+      c.drawLine(Offset.zero, Offset(w, h), g);
+      c.drawLine(Offset(w, 0), Offset(0, h), g);
+    }
+    _kotak(c, 0, h * 0.33, w, h * 0.34, _putih);
+    _kotak(c, w * 0.4, 0, w * 0.2, h, _putih);
+    _kotak(c, 0, h * 0.4, w, h * 0.2, const Color(0xFFC8102E));
+    _kotak(c, w * 0.43, 0, w * 0.14, h, const Color(0xFFC8102E));
+    c.restore();
+  }
+
+  @override
+  void paint(Canvas c, Size s) {
+    final w = s.width, h = s.height;
+    switch (iso) {
+      case 'ID':
+        _garisH(c, s, const [Color(0xFFE70011), _putih]);
+        break;
+
+      case 'PH':
+        _garisH(c, s, const [Color(0xFF0038A8), Color(0xFFCE1126)]);
+        final segitiga = Path()
+          ..moveTo(0, 0)
+          ..lineTo(w * 0.5, h / 2)
+          ..lineTo(0, h)
+          ..close();
+        c.drawPath(segitiga, _p(_putih));
+        c.drawCircle(Offset(w * 0.16, h / 2), h * 0.08,
+            _p(const Color(0xFFFCD116)));
+        break;
+
+      case 'GB':
+        _unionJack(c, Rect.fromLTWH(0, 0, w, h));
+        break;
+
+      case 'AU':
+        _kotak(c, 0, 0, w, h, const Color(0xFF012169));
+        _unionJack(c, Rect.fromLTWH(0, 0, w / 2, h / 2));
+        _bintang(c, Offset(w * 0.25, h * 0.76), h * 0.13, _putih);
+        for (final o in [
+          Offset(w * 0.76, h * 0.2),
+          Offset(w * 0.62, h * 0.45),
+          Offset(w * 0.88, h * 0.4),
+          Offset(w * 0.76, h * 0.78),
+        ]) {
+          _bintang(c, o, h * 0.075, _putih);
+        }
+        break;
+
+      case 'SG':
+        const merah = Color(0xFFEF3340);
+        _garisH(c, s, const [merah, _putih]);
+        _bulanSabit(c, Offset(w * 0.2, h * 0.25), h * 0.17, _putih, merah);
+        for (final o in [
+          Offset(w * 0.34, h * 0.14),
+          Offset(w * 0.3, h * 0.3),
+          Offset(w * 0.4, h * 0.22),
+        ]) {
+          c.drawCircle(o, h * 0.035, _p(_putih));
+        }
+        break;
+
+      case 'MY':
+        const biru = Color(0xFF010066);
+        _garisH(
+          c,
+          s,
+          [for (var i = 0; i < 14; i++) i.isEven ? const Color(0xFFCC0001) : _putih],
+        );
+        _kotak(c, 0, 0, w * 0.5, h * 0.5, biru);
+        _bulanSabit(c, Offset(w * 0.2, h * 0.25), h * 0.16,
+            const Color(0xFFFFCC00), biru);
+        _bintang(c, Offset(w * 0.34, h * 0.25), h * 0.09,
+            const Color(0xFFFFCC00));
+        break;
+
+      case 'IN':
+        _garisH(c, s, const [
+          Color(0xFFFF9933),
+          _putih,
+          Color(0xFF138808),
+        ]);
+        c.drawCircle(
+          Offset(w / 2, h / 2),
+          h * 0.11,
+          _p(const Color(0xFF000080))
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+        break;
+
+      case 'JP':
+        _kotak(c, 0, 0, w, h, _putih);
+        c.drawCircle(Offset(w / 2, h / 2), h * 0.3, _p(const Color(0xFFBC002D)));
+        break;
+
+      case 'CN':
+        const kuning = Color(0xFFFFDE00);
+        _kotak(c, 0, 0, w, h, const Color(0xFFDE2910));
+        _bintang(c, Offset(w * 0.17, h * 0.26), h * 0.18, kuning);
+        for (final o in [
+          Offset(w * 0.34, h * 0.1),
+          Offset(w * 0.4, h * 0.22),
+          Offset(w * 0.4, h * 0.38),
+          Offset(w * 0.34, h * 0.5),
+        ]) {
+          _bintang(c, o, h * 0.055, kuning);
+        }
+        break;
+
+      case 'VN':
+        _kotak(c, 0, 0, w, h, const Color(0xFFDA251D));
+        _bintang(c, Offset(w / 2, h * 0.53), h * 0.32, const Color(0xFFFFFF00));
+        break;
+
+      case 'TH':
+        _garisH(
+          c,
+          s,
+          const [
+            Color(0xFFA51931),
+            _putih,
+            Color(0xFF2D2A4A),
+            _putih,
+            Color(0xFFA51931),
+          ],
+          const [1, 1, 2, 1, 1],
+        );
+        break;
+
+      case 'US':
+        _garisH(
+          c,
+          s,
+          [for (var i = 0; i < 13; i++) i.isEven ? const Color(0xFFB22234) : _putih],
+        );
+        _kotak(c, 0, 0, w * 0.42, h * 7 / 13, const Color(0xFF3C3B6E));
+        for (var baris = 0; baris < 4; baris++) {
+          for (var kol = 0; kol < 5; kol++) {
+            c.drawCircle(
+              Offset(w * (0.05 + kol * 0.08), h * (0.07 + baris * 0.12)),
+              h * 0.028,
+              _p(_putih),
+            );
+          }
+        }
+        break;
+
+      case 'CA':
+        const merah = Color(0xFFD52B1E);
+        _kotak(c, 0, 0, w, h, _putih);
+        _kotak(c, 0, 0, w * 0.25, h, merah);
+        _kotak(c, w * 0.75, 0, w * 0.25, h, merah);
+        // Daun maple disederhanakan (setengah kanan, lalu dicerminkan)
+        const kanan = [
+          Offset(0, -1),
+          Offset(0.18, -0.6),
+          Offset(0.4, -0.7),
+          Offset(0.33, -0.28),
+          Offset(0.7, -0.48),
+          Offset(0.6, -0.1),
+          Offset(0.95, -0.02),
+          Offset(0.72, 0.22),
+          Offset(0.8, 0.42),
+          Offset(0.32, 0.34),
+          Offset(0.06, 0.4),
+          Offset(0.06, 0.95),
+        ];
+        final skala = h * 0.3;
+        final pusat = Offset(w / 2, h * 0.47);
+        final daun = Path();
+        for (var i = 0; i < kanan.length; i++) {
+          final pt = pusat + kanan[i] * skala;
+          i == 0 ? daun.moveTo(pt.dx, pt.dy) : daun.lineTo(pt.dx, pt.dy);
+        }
+        for (var i = kanan.length - 1; i >= 0; i--) {
+          final pt = pusat + Offset(-kanan[i].dx, kanan[i].dy) * skala;
+          daun.lineTo(pt.dx, pt.dy);
+        }
+        daun.close();
+        c.drawPath(daun, _p(merah));
+        break;
+
+      default:
+        _kotak(c, 0, 0, w, h, const Color(0xFFBDBDBD));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BenderaPainter old) => old.iso != iso;
 }
