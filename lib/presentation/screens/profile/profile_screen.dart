@@ -6,12 +6,11 @@ import '../../../data/models/user_profile.dart';
 import 'profile_edit.dart';
 
 class _MenuRow {
-  final IconData icon;
-  final Color color;
+  final String image;
   final String title;
   final String? trailing;
 
-  const _MenuRow(this.icon, this.color, this.title, [this.trailing]);
+  const _MenuRow(this.image, this.title, [this.trailing]);
 }
 
 // HEADER PROFIL: data dari SQLite, seluruh kartu bisa ditekan
@@ -93,22 +92,22 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   static const _akun = [
-    _MenuRow(Icons.location_on, AppColors.red, 'Alamat'),
-    _MenuRow(Icons.confirmation_number, AppColors.red, 'Voucher'),
-    _MenuRow(Icons.favorite, AppColors.red, 'Favorit'),
-    _MenuRow(Icons.newspaper, AppColors.red, 'Aktivitas'),
+    _MenuRow('assets/icons/titik.png', 'Alamat'),
+    _MenuRow('assets/icons/tiket merah.png', 'Voucher'),
+    _MenuRow('assets/icons/hati.png', 'Favorit'),
+    _MenuRow('assets/icons/berita merah.png', 'Aktivitas'),
   ];
 
   static const _tentang = [
-    _MenuRow(Icons.translate, AppColors.orange, 'Bahasa', 'Indonesia'),
-    _MenuRow(Icons.info, AppColors.orange, 'Pusat Bantuan'),
-    _MenuRow(Icons.newspaper, AppColors.orange, 'Berita dan Pembaruan'),
+    _MenuRow('assets/icons/bahasa.png', 'Bahasa', 'Indonesia'),
+    _MenuRow('assets/icons/info kuning.png', 'Pusat Bantuan'),
+    _MenuRow('assets/icons/berita kuning.png', 'Berita dan Pembaruan'),
   ];
 
   static const _legal = [
-    _MenuRow(Icons.shield, AppColors.primary, 'Kebijakan Privasi'),
-    _MenuRow(Icons.copy, AppColors.primary, 'Ketentuan Layanan'),
-    _MenuRow(Icons.call, AppColors.primary, 'Hubungi kami'),
+    _MenuRow('assets/icons/perisai.png', 'Kebijakan Privasi'),
+    _MenuRow('assets/icons/dokumen biru.png', 'Ketentuan Layanan'),
+    _MenuRow('assets/icons/telepon.png', 'Hubungi kami'),
   ];
 
   Widget _group(String title, List<_MenuRow> rows) {
@@ -135,7 +134,12 @@ class ProfileScreen extends StatelessWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   minVerticalPadding: 14,
-                  leading: Icon(rows[i].icon, color: rows[i].color),
+                  leading: Image.asset(
+                    rows[i].image,
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                  ),
                   title: Text(
                     rows[i].title,
                     style: const TextStyle(fontSize: 16),
