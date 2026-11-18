@@ -63,19 +63,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    
-  # To add assets to your application, add an assets section, like this:
-  assets:
-    - assets/bread.jpeg
-    - assets/dessert.webp
-    - assets/drinks.webp
-    - assets/pizza.webp
-    - assets/promo.webp
-    - assets/see_all.jpg
-    - assets/sides.webp
-    - assets/wings.webp
-    - assets/promo_icon.png
-    - assets/titik outline.png
+    - assets/icons_home/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

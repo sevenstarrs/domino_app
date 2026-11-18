@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/state/profile_state.dart';
+import '../../../data/models/user_profile.dart';
 
 const kNavy = Color(0xFF1A4B8C);
 const kRed = Color(0xFFD4202C);
@@ -46,7 +48,15 @@ class _BerandaState extends State<Beranda> {
   Timer? _timer;
   bool _takeaway = true;   // true = Takeaway, false = Delivery
   int _cart = 0;
-  bool _isLogin = true;   // ubah jadi true untuk melihat tampilan setelah login
+  bool get _isLogin => ProfileState.current.value != null;
+  
+  String get _sapaan {
+    final nama = ProfileState.current.value?.name.trim() ?? '';
+    if (nama.isEmpty) return "Hai Domino's lovers!";
+
+    final namaDepan = nama.split(' ').first;   // ambil kata pertama saja
+    return 'Hai, $namaDepan!';
+  }
 
   final String _namaAlamat = "Domino's Pizza - Soebrantas Pekanbaru";
   final String _alamatLengkap =
@@ -137,7 +147,8 @@ class _BerandaState extends State<Beranda> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    ProfileState.current.addListener(_onProfileChanged);
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (!_pageController.hasClients) return;
 
       // pindah ke banner berikutnya, kembali ke awal kalau sudah di ujung
@@ -145,7 +156,7 @@ class _BerandaState extends State<Beranda> {
 
       _pageController.animateToPage(
         next,
-        duration: const Duration(milliseconds: 700),
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
     });
@@ -155,34 +166,44 @@ class _BerandaState extends State<Beranda> {
   void dispose() {
     _timer?.cancel();
     _pageController.dispose();
+    ProfileState.current.removeListener(_onProfileChanged);
     super.dispose();
+  }
+
+  void _onProfileChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        _hero(),
-        // semua konten di bawah banner digeser naik 48px,
-        // supaya kartu lokasi menimpa bagian bawah banner
-        Transform.translate(
-          offset: const Offset(0, -20),
-          child: Column(
-            children: [
-              _locationCard(),
-              _categories(),                           
-              _section('Apps Exclusive', _exclusiveBanner()),
-              _section("Today's Special", _productList(_todaySpecial, 278, tinggi: 265)),
-              _section('Paket Hemat', _productList(_paketHemat, 158, tinggi: 268)),
-              _section('Paket Party', _productList(_paketParty, 158, tinggi: 268)), 
-              _section('Paket Pizza', _paketPizzaList()), 
-              if (_isLogin) _promoBox(),
-              const SizedBox(height: 24),     
-           ],
-          ),
-        ),
-      ],
+    return ValueListenableBuilder<UserProfile?>(
+      valueListenable: ProfileState.current,
+      builder: (context, profil, _) {
+        return ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _hero(),
+          // semua konten di bawah banner digeser naik 48px,
+          // supaya kartu lokasi menimpa bagian bawah banner
+          Transform.translate(
+            offset: const Offset(0, -20),
+            child: Column(
+              children: [
+                _locationCard(),
+                _categories(),                           
+                _section('Apps Exclusive', _exclusiveBanner()),
+                _section("Today's Special", _productList(_todaySpecial, 278, tinggi: 265)),
+                _section('Paket Hemat', _productList(_paketHemat, 158, tinggi: 268)),
+                _section('Paket Party', _productList(_paketParty, 158, tinggi: 268)), 
+                _section('Paket Pizza', _paketPizzaList()), 
+                if (_isLogin) _promoBox(),
+                const SizedBox(height: 24),     
+              ],
+              ),
+            ),
+          ],
+        );
+       },
     );
   }
 
@@ -265,9 +286,11 @@ class _BerandaState extends State<Beranda> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Hai Domino's lovers!",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          Text(
+            _sapaan,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
 
@@ -360,7 +383,7 @@ class _BerandaState extends State<Beranda> {
       width: size,
       height: size,
       child: Image.asset(
-        'assets/titik outline.png',
+        'assets/icons_home/titik outline.png',
         fit: BoxFit.contain,
         color: Colors.black54,
         errorBuilder: (context, error, stackTrace) =>
@@ -396,14 +419,14 @@ class _BerandaState extends State<Beranda> {
   Widget _categories() {
     // setiap item berisi ikon dan teks
     const items = [
-      ('assets/promo.webp', 'Promo'),
-      ('assets/pizza.webp', 'Pizza'),
-      ('assets/sides.webp', 'Sides'),
-      ('assets/bread.jpeg', 'Bread'),
-      ('assets/wings.webp', 'Wings'),
-      ('assets/dessert.webp', 'Dessert'),
-      ('assets/drinks.webp', 'Drinks'),
-      ('assets/see_all.jpg', 'See All'),
+      ('assets/icons_home/promo.webp', 'Promo'),
+      ('assets/icons_home/pizza.webp', 'Pizza'),
+      ('assets/icons_home/sides.webp', 'Sides'),
+      ('assets/icons_home/bread.jpeg', 'Bread'),
+      ('assets/icons_home/wings.webp', 'Wings'),
+      ('assets/icons_home/dessert.webp', 'Dessert'),
+      ('assets/icons_home/drinks.webp', 'Drinks'),
+      ('assets/icons_home/see_all.jpg', 'See All'),
     ];
 
     return Container(
@@ -756,7 +779,7 @@ class _BerandaState extends State<Beranda> {
                   width: 24,
                   height: 24,
                   child: Image.asset(
-                    'assets/promo_icon.png',
+                    'assets/icons_home/promo_icon.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
                         const Icon(Icons.confirmation_number, color: kNavy, size: 22),
