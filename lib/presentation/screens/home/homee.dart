@@ -46,7 +46,7 @@ class _BerandaState extends State<Beranda> {
   Timer? _timer;
   bool _takeaway = true;   // true = Takeaway, false = Delivery
   int _cart = 0;
-  bool _isLogin = false;   // ubah jadi true untuk melihat tampilan setelah login
+  bool _isLogin = true;   // ubah jadi true untuk melihat tampilan setelah login
 
   final String _namaAlamat = "Domino's Pizza - Soebrantas Pekanbaru";
   final String _alamatLengkap =
@@ -246,61 +246,60 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
- Widget _locationCard() {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 18),
-    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0xFFE0E0E0)),
-      boxShadow: const [
-        BoxShadow(
-          color: Color.fromARGB(19, 14, 10, 10),
-          blurRadius: 3,
-          offset: Offset(0, 1),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Hai Domino's lovers!",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
+  Widget _locationCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 18),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(19, 14, 10, 10),
+            blurRadius: 3,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Hai Domino's lovers!",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
 
-        // tombol Delivery / Takeaway
-        Row(
-          children: [
-            Expanded(
-              child: _toggleButton(
-                'Delivery',
-                !_takeaway,
-                () => setState(() => _takeaway = false),
+          // tombol Delivery / Takeaway
+          Row(
+            children: [
+              Expanded(
+                child: _toggleButton(
+                  'Delivery',
+                  !_takeaway,
+                  () => setState(() => _takeaway = false),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _toggleButton(
-                'Takeaway',
-                _takeaway,
-                () => setState(() => _takeaway = true),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _toggleButton(
+                  'Takeaway',
+                  _takeaway,
+                  () => setState(() => _takeaway = true),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        _alamatBox(),        
-      ],
-    ),
-  );
-}
+            ],
+          ),
+          const SizedBox(height: 8),
+          _alamatBox(),        
+        ],
+      ),
+    );
+  }
 
   Widget _alamatBox() {
-    // alamat lengkap hanya muncul kalau sudah login DAN memilih Delivery
-    if (_isLogin && !_takeaway) {
+    if (_isLogin && _takeaway) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(10),
@@ -326,7 +325,7 @@ class _BerandaState extends State<Beranda> {
                 ],
               ),
             ),
-            const Icon(Icons.location_on_outlined, size: 20, color: Colors.black54),
+            _pinIcon(size: 20),
           ],
         ),
       );
@@ -350,8 +349,22 @@ class _BerandaState extends State<Beranda> {
               style: const TextStyle(fontSize: 13, color: Colors.black45),
             ),
           ),
-          const Icon(Icons.location_on_outlined, size: 18, color: Colors.black54),
+          _pinIcon(size: 18),
         ],
+      ),
+    );
+  }
+
+  Widget _pinIcon({double size = 18}) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Image.asset(
+        'assets/titik outline.png',
+        fit: BoxFit.contain,
+        color: Colors.black54,
+        errorBuilder: (context, error, stackTrace) =>
+            Icon(Icons.location_on_outlined, size: size, color: Colors.black54),
       ),
     );
   }
@@ -707,35 +720,63 @@ class _BerandaState extends State<Beranda> {
   }
 
   Widget _promoBox() {
-    return InkWell(
-      onTap: () {
-        // nanti diisi: buka halaman kode promo
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(18, 8, 18, 0),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: kNavy, width: 1.5),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.confirmation_number, color: kNavy, size: 22),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Punya kode promo?',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: kNavy,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: Colors.black54),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+      padding: const EdgeInsets.all(2),                  // tebal border
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const SweepGradient(
+          center: Alignment.center,
+          colors: [
+            kNavy,
+            kNavy,
+            Color(0xFFDCE8F5),   // terang #1 (bawah, agak kiri)
+            kNavy,
+            kNavy,
+            Color(0xFFDCE8F5),   // terang #2 (atas, agak kanan)
+            kNavy,
+            kNavy,
           ],
+          stops: [0.0, 0.34, 0.41, 0.48, 0.84, 0.91, 0.98, 1.0],
+        ),
+      ),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14.5),         // 16 - 1.5
+        child: InkWell(
+          onTap: () {
+            // nanti diisi: buka halaman kode promo
+          },
+          borderRadius: BorderRadius.circular(14.5),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    'assets/promo_icon.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.confirmation_number, color: kNavy, size: 22),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Punya kode promo?',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: kNavy,
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right, color: Colors.black54),
+              ],
+            ),
+          ),
         ),
       ),
     );
