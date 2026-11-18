@@ -4,6 +4,10 @@ import '../../../data/cart_service.dart';
 import '../../../data/models/product.dart';
 import '../../widgets/product_image.dart';
 
+// Gambar bawaan (taruh file-nya di assets/images/)
+const String kDefaultSizeImage = 'assets/images/bag.jpeg';
+const String kDefaultCrustImage = 'assets/images/tiket.png';
+
 /// Satu halaman detail untuk semua produk.
 /// - Produk biasa (Sides, Bread, Wings, Dessert, Drinks): Size + Crust
 /// - Produk dengan Product.promoItems: tampilan paket promo ("Pilih pizza Anda")
@@ -20,6 +24,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _qty = 1;
   bool _loading = false;
+  int _crustIndex = 0;
   late bool _favorite =
       FavoriteService.instance.isFavorite(widget.product.name);
 
@@ -34,14 +39,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   };
 
   bool get _isPromo => widget.product.promoItems.isNotEmpty;
-  bool get _hasToppings => widget.product.toppings.isNotEmpty;
+  bool get _hasToppings => widget.product.toppings.isNotEmpty && _size.hasToppings;
 
   ProductSize get _size => widget.product.sizeOptions[_sizeIndex];
 
-  int _toppingPrice(Topping t) => t.price ?? widget.product.toppingPrice;
+  // pilihan crust mengikuti ukuran yang dipilih
+  List<CrustOption> get _crusts {
+    final c = _size.crusts;
+    return c.isEmpty ? [CrustOption(widget.product.crustName)] : c;
+  }
+
+  CrustOption get _crust =>
+      _crusts[_crustIndex.clamp(0, _crusts.length - 1).toInt()];
+
+  // harga topping mengikuti ukuran yang dipilih
+  int _toppingPrice(Topping t) =>
+      t.price ?? _size.toppingPrice ?? widget.product.toppingPrice;
 
   // total harga topping berbayar yang dicentang
   int get _extra {
+    if (!_hasToppings) return 0;
     var sum = 0;
     for (final i in _selected) {
       final t = widget.product.toppings[i];
@@ -50,23 +67,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return sum;
   }
 
-  // harga satuan mengikuti ukuran dan topping tambahan
-  int get _unitPrice => (_size.price ?? widget.product.price) + _extra;
+  // harga satuan = ukuran + crust + topping tambahan
+  int get _unitPrice =>
+      (_size.price ?? widget.product.price) + _crust.price + _extra;
   int get _total => _unitPrice * _qty;
 
-  // ringkasan pilihan untuk keranjang (isi promo atau daftar topping)
+  // ringkasan pilihan untuk keranjang (isi promo, crust, dan topping)
   String? get _note {
     if (_isPromo) {
       return widget.product.promoItems
           .map((i) => '${i.name} (${i.size})')
           .join(' + ');
     }
+    final parts = <String>[];
+    if (_crusts.length > 1) parts.add('Crust: ${_crust.name}');
     if (_hasToppings && _selected.isNotEmpty) {
       final sorted = _selected.toList()..sort();
       final names = sorted.map((i) => widget.product.toppings[i].name);
-      return 'Topping: ${names.join(', ')}';
+      parts.add('Topping: ${names.join(', ')}');
     }
-    return null;
+    return parts.isEmpty ? null : parts.join(' | ');
   }
 
   void _toggleFavorite() {
@@ -200,21 +220,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         child: Column(
           children: [
+            // ikon ukuran dari asset (kalau tidak ada, pakai ikon bawaan)
             CircleAvatar(
-              radius: 18,
+              radius: 20,
               backgroundColor: const Color(0xFFF2F2F2),
-              child: s.image != null
-                  ? ClipOval(
-                      child: Image.asset(
-                        s.image!,
-                        width: 36,
-                        height: 36,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            Icon(s.icon, size: 20, color: s.iconColor),
-                      ),
-                    )
-                  : Icon(s.icon, size: 20, color: s.iconColor),
+              child: ClipOval(
+                child: Image.asset(
+                  s.image ?? kDefaultSizeImage,
+                  width: 55,
+                  height: 55,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) =>
+                      Icon(s.icon, size: 20, color: s.iconColor),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -234,6 +253,82 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Text(
       text,
       style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+    );
+  }
+
+  // ---------------- CRUST: satu baris pilihan ----------------
+  Widget _crustRow(CrustOption c, int i) {
+    final selected = i == _crustIndex;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        if (!_loading) setState(() => _crustIndex = i);
+      },
+      child: Row(
+        children: [
+          Image.asset(
+            c.image ?? kDefaultCrustImage,
+            width: 22,
+            height: 22,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.confirmation_number_outlined,
+              size: 22,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              c.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            c.price == 0
+                ? 'Bebas'
+                : rupiahText(c.price).replaceFirst('Rp ', 'Rp.'),
+            style: TextStyle(
+              fontSize: 15,
+              color: c.price == 0 ? AppColors.green : Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Icon(
+            selected
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked,
+            size: 20,
+            color: selected ? AppColors.primary : const Color(0xFFBDBDBD),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Kotak daftar crust (satu pilihan, atau banyak pilihan)
+  Widget _crustList() {
+    final crusts = _crusts;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFEDEDED)),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < crusts.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            _crustRow(crusts[i], i),
+          ],
+        ],
+      ),
     );
   }
 
@@ -345,25 +440,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       CircleAvatar(
                         radius: 13,
                         backgroundColor: Colors.white,
-                        child: item.sizeImage != null
-                            ? ClipOval(
-                                child: Image.asset(
-                                  item.sizeImage!,
-                                  width: 26,
-                                  height: 26,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Icon(
-                                    item.sizeIcon,
-                                    size: 15,
-                                    color: item.sizeIconColor,
-                                  ),
-                                ),
-                              )
-                            : Icon(
-                                item.sizeIcon,
-                                size: 15,
-                                color: item.sizeIconColor,
-                              ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            item.sizeImage ?? kDefaultSizeImage,
+                            width: 26,
+                            height: 26,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              item.sizeIcon,
+                              size: 15,
+                              color: item.sizeIconColor,
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Text(
@@ -414,9 +503,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   // ---------------- PIZZA: baris topping ----------------
-  // Lingkaran kecil topping (gambar atau warna)
   // gambar yang dipakai semua topping (kecuali topping yang punya image sendiri)
-static const String _defaultToppingImage = 'assets/images/toping.png';
+  static const String _defaultToppingImage = 'assets/images/toping.png';
+
+  // Lingkaran kecil topping (gambar atau warna)
   Widget _toppingDot(Topping t) {
     final dot = Container(
       width: 22,
@@ -554,7 +644,7 @@ static const String _defaultToppingImage = 'assets/images/toping.png';
                   ),
                   const SizedBox(height: 10),
                   Text(
-                     p.description.replaceAll('-', '\u2011'),
+                    p.description.replaceAll('-', '\u2011'),
                     style: const TextStyle(
                       fontSize: 14.5,
                       color: Color(0xFF9E9E9E),
@@ -621,7 +711,12 @@ static const String _defaultToppingImage = 'assets/images/toping.png';
                               sizes[i],
                               i == _sizeIndex,
                               () {
-                                if (!_loading) setState(() => _sizeIndex = i);
+                                if (!_loading) {
+                                  setState(() {
+                                    _sizeIndex = i;
+                                    _crustIndex = 0; // crust ikut direset
+                                  });
+                                }
                               },
                             ),
                           ),
@@ -633,49 +728,7 @@ static const String _defaultToppingImage = 'assets/images/toping.png';
                     // ================= CRUST =================
                     _heading('Crust'),
                     const SizedBox(height: 14),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFEDEDED)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.confirmation_number_outlined,
-                            size: 22,
-                            color: Colors.black87,
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              p.crustName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 15),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Bebas',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.green,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          const Icon(
-                            Icons.radio_button_checked,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                        ],
-                      ),
-                    ),
+                    _crustList(),
 
                     // ================= TOPPING (khusus pizza) =================
                     if (_hasToppings) ...[

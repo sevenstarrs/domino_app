@@ -3,16 +3,13 @@ import 'package:flutter/material.dart';
 /// Satu pilihan ukuran produk, misalnya "5 Pieces", "1 Liter", "390 ml".
 class ProductSize {
   final String label;
-
-  /// Harga untuk ukuran ini. Kalau kosong, memakai harga dasar produk.
   final int? price;
-
-  /// Ikon di lingkaran kecil kartu ukuran.
   final IconData icon;
   final Color iconColor;
-
-  /// Opsional: path gambar asset untuk menggantikan ikon.
   final String? image;
+  final List<CrustOption> crusts;
+  final int? toppingPrice;
+  final bool hasToppings;
 
   const ProductSize(
     this.label, {
@@ -20,7 +17,18 @@ class ProductSize {
     this.icon = Icons.shopping_bag,
     this.iconColor = const Color(0xFFF0B429),
     this.image,
+    this.crusts = const [],
+    this.toppingPrice,
+    this.hasToppings = true,
   });
+}
+
+class CrustOption {
+  final String name;
+  final int price; // 0 = Bebas
+  final String? image;
+
+  const CrustOption(this.name, {this.price = 0, this.image});
 }
 
 /// Satu menu di dalam paket promo (mis. "Bread Stick" di Papi Uno).
