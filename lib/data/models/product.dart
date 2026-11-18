@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class Product {
@@ -6,7 +7,12 @@ class Product {
   final int price;
   final int? originalPrice;
   final bool customizable;
-  final Color imageColor; // placeholder, ganti dengan URL/asset gambar asli
+
+  // URL gambar produk dari internet
+  final String? imageUrl;
+
+  // Placeholder jika gambar belum tersedia
+  final Color imageColor;
   final IconData imageIcon;
 
   const Product({
@@ -15,6 +21,7 @@ class Product {
     required this.price,
     this.originalPrice,
     this.customizable = true,
+    this.imageUrl,
     this.imageColor = const Color(0xFFFF7A2F),
     this.imageIcon = Icons.local_pizza,
   });

@@ -24,12 +24,16 @@ class CartManager extends ChangeNotifier {
   int get totalQuantity =>
       _items.fold(0, (total, item) => total + item.quantity);
 
-  int get subtotal =>
-      _items.fold(0, (total, item) => total + item.product.price * item.quantity);
+  int get subtotal => _items.fold(
+        0,
+        (total, item) => total + item.product.price * item.quantity,
+      );
 
   void add(Product product) {
     final index = _items.indexWhere(
-      (item) => identical(item.product, product),
+      (item) =>
+          item.product.name == product.name &&
+          item.product.price == product.price,
     );
 
     if (index >= 0) {

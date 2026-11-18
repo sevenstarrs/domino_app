@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../data/cart/cart_manager.dart';
+import '../../data/models/product.dart';
 
 class KeranjangScreen extends StatefulWidget {
   const KeranjangScreen({super.key});
@@ -8,9 +10,6 @@ class KeranjangScreen extends StatefulWidget {
 }
 
 class _KeranjangScreenState extends State<KeranjangScreen> {
-  // =====================================================
-  // WARNA
-  // =====================================================
 
   static const Color navy = Color(0xFF1B4F7C);
   static const Color disabledBlue = Color(0xFF9DC3E7);
@@ -19,26 +18,60 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   static const Color red = Color(0xFFE31837);
   static const Color couponBorder = Color(0xFFF0C96A);
 
-  // =====================================================
-  // DATA
-  // =====================================================
+  static const String extraChiliAsset = 'assets/images/chili.png';
 
-  static const int hargaSatuan = 101909;
+  static const String blueEcobagAsset = 'assets/images/ecobag.png';
+
+  static const Product extraChili = Product(
+    name: 'Extra Chili Sachet',
+    description: "Domino's Extra Chili Sachet",
+    price: 500,
+    imageColor: Color(0xFFE8E8E8),
+    imageIcon: Icons.local_fire_department,
+  );
+
+  static const Product blueEcobag = Product(
+    name: 'Blue Ecobag 12"',
+    description: "Domino's Blue Ecobag 12\"",
+    price: 5000,
+    imageUrl: blueEcobagAsset,
+    imageColor: Color(0xFF087E9B),
+    imageIcon: Icons.shopping_bag,
+  );
 
   bool isDelivery = false;
-  bool gratisOngkirTerbuka = false;
   bool hasAddress = false;
   bool pesanUntukOrangLain = false;
 
   String alamatPengiriman = '';
+  // Data tambahan disimpan secara static agar tidak hilang saat halaman
+  // KeranjangScreen ditutup sementara dan dibuka kembali dalam sesi aplikasi.
+  static final Map<String, int> _extraQuantities = {};
 
-  int qty = 1;
-  int extraTotal = 0;
+  int get extraTotal {
+    return (extraChili.price * (_extraQuantities[extraChili.name] ?? 0)) +
+        (blueEcobag.price * (_extraQuantities[blueEcobag.name] ?? 0));
+  }
+
   int selectedPayment = -1;
 
-  // =====================================================
-  // FORMAT RUPIAH
-  // =====================================================
+  @override
+  void initState() {
+    super.initState();
+    CartManager.instance.addListener(_onCartChanged);
+  }
+
+  void _onCartChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    CartManager.instance.removeListener(_onCartChanged);
+    super.dispose();
+  }
 
   String rp(int v, {String prefix = 'Rp '}) {
     final s = v.toString().replaceAllMapped(
@@ -49,21 +82,13 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     return '$prefix$s';
   }
 
-  // =====================================================
-  // PERHITUNGAN PEMBAYARAN
-  // =====================================================
-
-  int get subtotal => hargaSatuan * qty + extraTotal;
+  int get subtotal => CartManager.instance.subtotal + extraTotal;
 
   int get pajak => (subtotal * 0.10).round();
 
   int get total => subtotal + pajak;
 
   bool get hasAddressOrTakeaway => !isDelivery || hasAddress;
-
-  // =====================================================
-  // NAMA METODE PEMBAYARAN
-  // =====================================================
 
   String get namaMetodePembayaran {
     switch (selectedPayment) {
@@ -79,10 +104,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         return '';
     }
   }
-
-  // =====================================================
-  // PILIH DELIVERY
-  // =====================================================
 
   void _pilihDelivery() {
     setState(() {
@@ -152,10 +173,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // =====================================================
-  // TAMBAH ALAMAT
-  // =====================================================
-
   Future<void> _tambahAlamat() async {
     final controller = TextEditingController(
       text: alamatPengiriman,
@@ -212,7 +229,10 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       ),
     );
 
-    if (!mounted) return;
+    if (!mounted) {
+      controller.dispose();
+      return;
+    }
 
     if (hasil != null && hasil.trim().isNotEmpty) {
       setState(() {
@@ -225,16 +245,11 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     controller.dispose();
   }
 
-  // =====================================================
-  // BUILD
-  // =====================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // APP BAR
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -263,20 +278,19 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
           preferredSize: Size.fromHeight(1),
           child: Divider(
             height: 1,
-            thickness: 1,
+            thickness: 3,
             color: Color(0xFFEEEEEE),
           ),
         ),
       ),
 
-      // BODY
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
                 18,
-                14,
+                20,
                 18,
                 20,
               ),
@@ -284,11 +298,9 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _kartuPengambilan(),
-
                   const SizedBox(height: 14),
 
                   _kartuRingkasanPesanan(),
-
                   const SizedBox(height: 18),
 
                   const Text(
@@ -298,7 +310,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-
                   const SizedBox(height: 3),
 
                   const Text(
@@ -308,23 +319,19 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       color: Color(0xFF333333),
                     ),
                   ),
-
                   const SizedBox(height: 12),
 
                   _bannerPapiDuo(),
-
                   const SizedBox(height: 14),
 
                   _kartuExtra(),
-
                   const SizedBox(height: 16),
 
                   const Divider(
                     height: 1,
-                    thickness: 1,
+                    thickness: 2,
                     color: Color(0xFFEEEEEE),
                   ),
-
                   const SizedBox(height: 14),
 
                   const Text(
@@ -334,7 +341,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-
                   const SizedBox(height: 12),
 
                   _barisHarga(
@@ -342,7 +348,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                     rp(subtotal),
                     grey: true,
                   ),
-
                   const SizedBox(height: 10),
 
                   _barisHarga(
@@ -353,7 +358,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
                   if (isDelivery) ...[
                     const SizedBox(height: 10),
-
                     _barisHarga(
                       'Delivery',
                       'Bebas',
@@ -365,10 +369,9 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
                   const Divider(
                     height: 1,
-                    thickness: 1,
+                    thickness: 2,
                     color: Color(0xFFEEEEEE),
                   ),
-
                   const SizedBox(height: 12),
 
                   _barisHarga(
@@ -376,18 +379,12 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                     rp(total, prefix: 'Rp. '),
                     bold: true,
                   ),
-
                   const SizedBox(height: 14),
 
                   _kotakKupon(),
-
                   const SizedBox(height: 12),
 
-                  // PESAN UNTUK ORANG LAIN
-                  // HANYA DELIVERY
-
-                  if (isDelivery)
-                    _pesanUntukOrangLain(),
+                  if (isDelivery) _pesanUntukOrangLain(),
 
                   const SizedBox(height: 16),
 
@@ -398,11 +395,9 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-
                   const SizedBox(height: 12),
 
                   _daftarMetodePembayaran(),
-
                   const SizedBox(height: 22),
 
                   RichText(
@@ -427,7 +422,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
 
                   TextField(
@@ -473,86 +467,53 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // =====================================================
-  // KARTU DELIVERY DAN TAKEAWAY
-  // =====================================================
-
   Widget _kartuPengambilan() {
     return Container(
-      width: double.infinity,
+      
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-
-        // GARIS LUAR TETAP MENGELILINGI KARTU
-
-        border: Border.all(
-          color: const Color(0xFFE0E0E0),
-          width: 1,
-        ),
-
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDADADA), width: 0.7,), boxShadow: const [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // DELIVERY DAN TAKEAWAY
-
-          Padding(
-            padding: const EdgeInsets.all(11),
+          Container(
+            height: 48,
+            margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFDADADA)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x10000000),
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: _tombolToggle(
-                    'Delivery',
-                    isDelivery,
-                    _pilihDelivery,
-                  ),
+                  child: _tombolToggle('Delivery', isDelivery, _pilihDelivery),
                 ),
-
                 const SizedBox(width: 6),
-
                 Expanded(
-                  child: _tombolToggle(
-                    'Takeaway',
-                    !isDelivery,
-                    () {
-                      setState(() {
-                        isDelivery = false;
-                      });
-                    },
-                  ),
+                  child: _tombolToggle('Takeaway', !isDelivery, () {
+                    setState(() => isDelivery = false);
+                  }),
                 ),
               ],
             ),
           ),
-
-          // SATU GARIS PEMBATAS SAJA
-
-          const Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFFEEEEEE),
-          ),
-
-          if (isDelivery)
-            _isiDelivery()
-          else
-            _isiTakeaway(),
+          if (isDelivery) _isiDelivery() else _isiTakeaway(),
         ],
       ),
     );
   }
-
-  // =====================================================
-  // TOMBOL DELIVERY / TAKEAWAY
-  // =====================================================
 
   Widget _tombolToggle(
     String label,
@@ -562,22 +523,16 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 32,
+        height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: aktif ? navy : Colors.white,
           borderRadius: BorderRadius.circular(6),
-
-          // Tombol tidak aktif tetap putih tanpa garis tambahan.
-          border: Border.all(
-            color: aktif ? navy : Colors.transparent,
-            width: 1,
-          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: aktif ? Colors.white : Colors.black,
           ),
@@ -586,65 +541,47 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // =====================================================
-  // DELIVERY
-  // =====================================================
-
   Widget _isiDelivery() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        12,
-        14,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ALAMAT
-
           GestureDetector(
             onTap: _tambahAlamat,
             child: Container(
               constraints: const BoxConstraints(
-                minHeight: 42,
+                minHeight: 38,
               ),
               padding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 9,
+                vertical: 7,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F3F3),
-                border: Border.all(
-                  color: borderGrey,
-                ),
-                borderRadius: BorderRadius.circular(8),
+                color: const Color(0xFFF4F4F4),
+                border: Border.all(color: const Color(0xFFD8D8D8), width: 1),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1)),
+                ],
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      hasAddress
-                          ? alamatPengiriman
-                          : 'Kirim ke',
+                      hasAddress ? alamatPengiriman : 'Kirim ke',
                       style: TextStyle(
-                        fontSize: 13,
-                        color: hasAddress
-                            ? const Color(0xFF333333)
-                            : const Color(0xFF999999),
+                        fontSize: 12.5,
+                        color: hasAddress ? const Color(0xFF333333) : const Color(0xFF999999),
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
-                  const Icon(
-                    Icons.location_on_outlined,
-                    color: Color(0xFF555555),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Color(0xFF777777),
-                    size: 20,
+                  _assetIcon(
+                    'titik outline',
+                    size: 22,
+                    color: const Color(0xFF666666),
+                    fallback: Icons.location_on_outlined,
                   ),
                 ],
               ),
@@ -658,10 +595,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             thickness: 1,
             color: Color(0xFFEEEEEE),
           ),
-
           const SizedBox(height: 12),
-
-          // OPSI PENGIRIMAN
 
           Row(
             children: [
@@ -672,9 +606,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(width: 8),
-
               _chipJaminan('Jaminan 30 menit'),
             ],
           ),
@@ -682,67 +614,36 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
           const SizedBox(height: 10),
 
           _kotakNow(),
-
           const SizedBox(height: 12),
 
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              setState(() {
-                gratisOngkirTerbuka =
-                    !gratisOngkirTerbuka;
-              });
-            },
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Pengiriman GRATIS diterapkan',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textGrey,
-                    ),
+          // Baris informasi statis: tidak memiliki aksi saat disentuh.
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Pengiriman GRATIS diterapkan',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color.fromARGB(255, 129, 127, 127),
                   ),
                 ),
-                Icon(
-                  gratisOngkirTerbuka
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: Colors.black,
-                  size: 24,
-                ),
-              ],
-            ),
-          ),
-
-          if (gratisOngkirTerbuka) ...[
-            const SizedBox(height: 8),
-
-            const Text(
-              'Biaya pengiriman Rp 0',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF777777),
               ),
-            ),
-          ],
+              const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.black,
+                size: 24,
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  // =====================================================
-  // TAKEAWAY
-  // =====================================================
-
   Widget _isiTakeaway() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        14,
-        10,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -754,15 +655,12 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                 color: red,
                 size: 22,
               ),
-
               const SizedBox(width: 10),
 
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // UKURAN PENJEMPUTAN TETAP
-
                     Text(
                       'Penjemputan dari 2.2602 km',
                       style: TextStyle(
@@ -770,11 +668,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                         color: textGrey,
                       ),
                     ),
-
                     SizedBox(height: 4),
-
-                    // NAMA DOMINO'S DIPERKECIL
-
                     Text(
                       "Domino's Pizza - Soebrantas Pekanbaru",
                       style: TextStyle(
@@ -782,11 +676,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-
                     SizedBox(height: 4),
-
-                    // ALAMAT JALAN DIPERKECIL
-
                     Text(
                       'Jl. HR. Soebrantas, Simpang Baru Kec. Tampan, Kota Pekanbaru, Riau 28282',
                       style: TextStyle(
@@ -814,7 +704,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             thickness: 1,
             color: Color(0xFFEEEEEE),
           ),
-
           const SizedBox(height: 12),
 
           Row(
@@ -826,9 +715,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-
               const SizedBox(width: 8),
-
               _chipJaminan('Jaminan 15 menit'),
             ],
           ),
@@ -840,12 +727,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       ),
     );
   }
-
-  // =====================================================
-  // JAMINAN 15 / 30 MENIT
-  // GRADASI TERANG DI TENGAH
-  // BAGIAN DALAM TETAP PUTIH
-  // =====================================================
 
   Widget _chipJaminan(String teks) {
     return Container(
@@ -884,16 +765,10 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // =====================================================
-  // NOW
-  // =====================================================
-
   Widget _kotakNow() {
     return Container(
       height: 40,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(
@@ -902,16 +777,15 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         ),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(
-            Icons.bolt_outlined,
+          _assetIcon(
+            'petir',
             size: 18,
             color: Colors.black87,
+            fallback: Icons.bolt_outlined,
           ),
-
           SizedBox(width: 8),
-
           Expanded(
             child: Text(
               'Now',
@@ -922,7 +796,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
               ),
             ),
           ),
-
           Icon(
             Icons.radio_button_checked,
             color: navy,
@@ -933,229 +806,387 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // =====================================================
-  // RINGKASAN PESANAN
-  // =====================================================
+  int get _jumlahSemuaItem =>
+      CartManager.instance.totalQuantity +
+      (_extraQuantities[extraChili.name] ?? 0) +
+      (_extraQuantities[blueEcobag.name] ?? 0);
 
-Widget _kartuRingkasanPesanan() {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.fromLTRB(
-      16,
-      16,
-      16,
-      16,
-    ),
-    decoration: _kartu(radius: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Ringkasan Pesanan',
+  bool _isExtra(Product product) =>
+      product.name == extraChili.name || product.name == blueEcobag.name;
+
+  Future<bool> _konfirmasiHapusItem() async {
+    final hasil = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 15,
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(48, 24, 40, 0),
+        title: const Text(
+          'Hapus Item?',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
           ),
         ),
-
-        const SizedBox(height: 14),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 6,
+        contentPadding: const EdgeInsets.fromLTRB(48, 12, 40, 0),
+        content: const Text(
+          'Ini adalah barang terakhir di keranjang Anda. Setelah ini, keranjang Anda akan kosong.',
+          style: TextStyle(
+            fontSize: 18,
+            height: 1.2,
+            color: Color(0xFF222222),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: SizedBox(
-                  width: 78,
-                  height: 78,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 12, 28, 12),
+        buttonPadding: const EdgeInsets.symmetric(horizontal: 10),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            child: const Text('MEMBATALKAN'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.black,
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            child: const Text('OKE'),
+          ),
+        ],
+      ),
+    );
+    return hasil ?? false;
+  }
 
-                  // GAMBAR PAPI DUO DARI INTERNET
-                  child: Image.network(
-                    'https://dominos.menumakanan.com/img/papi-duo.jpg',
+  Future<void> _kurangiItem(CartItem item) async {
+    if (item.quantity > 1) {
+      CartManager.instance.decrease(item);
+      return;
+    }
 
-                    width: 78,
-                    height: 78,
-                    fit: BoxFit.cover,
+    if (_jumlahSemuaItem == 1) {
+      if (!await _konfirmasiHapusItem() || !mounted) return;
+    }
+    CartManager.instance.remove(item);
+  }
 
-                    // INDIKATOR KETIKA GAMBAR DIMUAT
-                    loadingBuilder: (
-                      context,
-                      child,
-                      loadingProgress,
-                    ) {
-                      if (loadingProgress == null) {
-                        return child;
-                      }
+  Future<void> _kurangiExtra(Product product) async {
+    final jumlah = _extraQuantities[product.name] ?? 0;
+    if (jumlah <= 0) return;
 
-                      return Container(
-                        color: const Color(0xFF3AA7E8),
-                        alignment: Alignment.center,
-                        child: const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        ),
-                      );
-                    },
+    if (jumlah == 1 && _jumlahSemuaItem == 1) {
+      if (!await _konfirmasiHapusItem() || !mounted) return;
+    }
 
-                    // GAMBAR PENGGANTI JIKA URL ERROR
-                    errorBuilder: (
-                      context,
-                      error,
-                      stackTrace,
-                    ) {
-                      return Container(
-                        color: const Color(0xFF3AA7E8),
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.all(8),
-                        child: const Text(
-                          'PAPI DUO',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                          ),
-                        ),
-                      );
-                    },
+    setState(() {
+      if (jumlah <= 1) {
+        _extraQuantities.remove(product.name);
+      } else {
+        _extraQuantities[product.name] = jumlah - 1;
+      }
+    });
+  }
+
+  void _tambahExtra(Product product) {
+    setState(() {
+      _extraQuantities[product.name] =
+          (_extraQuantities[product.name] ?? 0) + 1;
+    });
+  }
+
+  void _editPesanan(Product product) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Edit Pesanan'),
+        content: Text(
+          'Untuk mengubah pilihan ${product.name}, silakan pilih kembali produk melalui menu.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OKE'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kartuRingkasanPesanan() {
+    final items = <CartItem>[
+      ...CartManager.instance.items,
+      if ((_extraQuantities[extraChili.name] ?? 0) > 0)
+        CartItem(
+          product: extraChili,
+          quantity: _extraQuantities[extraChili.name]!,
+        ),
+      if ((_extraQuantities[blueEcobag.name] ?? 0) > 0)
+        CartItem(
+          product: blueEcobag,
+          quantity: _extraQuantities[blueEcobag.name]!,
+        ),
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: _kartu(radius: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ringkasan Pesanan',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          if (items.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 18),
+              child: Center(
+                child: Text(
+                  'Keranjang masih kosong. Silakan pilih produk terlebih dahulu.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textGrey,
                   ),
                 ),
               ),
+            )
+          else
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: _barisProdukKeranjang(item),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
-              const SizedBox(width: 8),
+  Widget _barisProdukKeranjang(CartItem item) {
+    final product = item.product;
 
-              Expanded(
-                child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 78,
+              height: 78,
+              child: product.name == extraChili.name
+                  ? Image.asset(
+                      extraChiliAsset,
+                      width: 78,
+                      height: 78,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: product.imageColor,
+                        alignment: Alignment.center,
+                        child: Icon(product.imageIcon, size: 42, color: Colors.white),
+                      ),
+                    )
+                  : product.name == blueEcobag.name
+                      ? Image.asset(
+                          blueEcobagAsset,
+                          width: 78,
+                          height: 78,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: product.imageColor,
+                            alignment: Alignment.center,
+                            child: Icon(product.imageIcon, size: 42, color: Colors.white),
+                          ),
+                        )
+                      : product.imageUrl != null && product.imageUrl!.trim().isNotEmpty
+                  ? Image.network(
+                      product.imageUrl!,
+                      width: 78,
+                      height: 78,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: product.imageColor,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            product.imageIcon,
+                            size: 42,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: product.imageColor,
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      color: product.imageColor,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        product.imageIcon,
+                        size: 42,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Double Date 11.11 Sale!',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    Expanded(
+                      child: Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (!_isExtra(product))
+                      InkWell(
+                        onTap: () => _editPesanan(product),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 5),
+                          child: _assetIcon(
+                            'edit',
+                            size: 21,
+                            fallback: Icons.edit_outlined,
                           ),
                         ),
+                      ),
+                  ],
+                ),
 
-                        const Icon(
-                          Icons.edit_note_outlined,
-                          color: Color(0xFF1B6CA8),
-                          size: 24,
-                        ),
-                      ],
+                if (product.description.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    product.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: textGrey,
                     ),
+                  ),
+                ],
 
-                    const SizedBox(height: 2),
+                const SizedBox(height: 7),
 
-                    const Text(
-                      '•  M HT Margherita',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textGrey,
-                        fontWeight: FontWeight.w500,
-                        height: 1.05,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        rp(product.price * item.quantity),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(height: 1),
+                    _tombolStep(
+                      Icons.remove,
+                      red,
+                      () {
+                        if (_isExtra(product)) {
+                          _kurangiExtra(product);
+                        } else {
+                          _kurangiItem(item);
+                        }
+                      },
+                    ),
 
-                    const Text(
-                      '•  M HT Volcano Meatmax',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textGrey,
-                        fontWeight: FontWeight.w500,
-                        height: 1.05,
+                    const SizedBox(width: 6),
+
+                    Container(
+                      width: 28,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF2FB),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFFD6E4F3),
+                        ),
+                      ),
+                      child: Text(
+                        '${item.quantity}',
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
 
-                    const SizedBox(height: 5),
+                    const SizedBox(width: 6),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            rp(hargaSatuan),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-
-                        _tombolStep(
-                          Icons.remove,
-                          red,
-                          () {
-                            if (qty > 1) {
-                              setState(() {
-                                qty--;
-                              });
-                            }
-                          },
-                        ),
-
-                        const SizedBox(width: 6),
-
-                        Container(
-                          width: 28,
-                          height: 24,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEAF2FB),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: const Color(0xFFD6E4F3),
-                            ),
-                          ),
-                          child: Text(
-                            '$qty',
-                            style: const TextStyle(
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 6),
-
-                        _tombolStep(
-                          Icons.add,
-                          navy,
-                          () {
-                            setState(() {
-                              qty++;
-                            });
-                          },
-                        ),
-                      ],
+                    _tombolStep(
+                      Icons.add,
+                      navy,
+                      () {
+                        if (_isExtra(product)) {
+                          _tambahExtra(product);
+                        } else {
+                          CartManager.instance.increase(item);
+                        }
+                      },
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  // =====================================================
-  // TOMBOL JUMLAH PESANAN
-  // =====================================================
+        ],
+      ),
+    );
+  }
 
   Widget _tombolStep(
     IconData icon,
@@ -1185,144 +1216,105 @@ Widget _kartuRingkasanPesanan() {
     );
   }
 
-  // =====================================================
-  // BANNER PAPI DUO
-  // =====================================================
-
-
-Widget _bannerPapiDuo() {
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(16),
-    child: SizedBox(
-      width: double.infinity,
-      height: 168,
-      child: Image.network(
-        'MASUKKAN_LINK_GAMBAR_PAPI_DUO',
+  Widget _bannerPapiDuo() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
         width: double.infinity,
         height: 168,
-        fit: BoxFit.cover,
+        child: Image.network(
+          'https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/06d6bad3-37b2-47b8-ad23-4fffa4a997e6_Banner-PAPI-DUO.jpg',
+          width: double.infinity,
+          height: 168,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) {
+              return child;
+            }
 
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            return child;
-          }
-
-          return Container(
-            color: const Color(0xFF2E7BC4),
-            alignment: Alignment.center,
-            child: const CircularProgressIndicator(
-              color: Colors.white,
-            ),
-          );
-        },
-
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: const Color(0xFF2E7BC4),
-            alignment: Alignment.center,
-            child: const Text(
-              'Gambar Papi Duo tidak dapat dimuat',
-              style: TextStyle(
+            return Container(
+              color: const Color(0xFF2E7BC4),
+              alignment: Alignment.center,
+              child: const CircularProgressIndicator(
                 color: Colors.white,
               ),
-            ),
-          );
-        },
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: const Color(0xFF2E7BC4),
+              alignment: Alignment.center,
+              child: const Text(
+                'Gambar Papi Duo tidak dapat dimuat',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
-
-
-  // =====================================================
-  // EXTRA CHILI DAN ECOBAG
-  // =====================================================
+    );
+  }
 
   Widget _kartuExtra() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        8,
-        14,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
       decoration: _kartu(radius: 16),
       child: Column(
         children: [
-          _barisExtra(
-            'Extra Chili Sachet',
-            500,
-          ),
-
+          _barisExtra(extraChili),
           const SizedBox(height: 6),
-
-          _barisExtra(
-            'Blue Ecobag 12"',
-            5000,
-          ),
+          _barisExtra(blueEcobag),
         ],
       ),
     );
   }
 
-  Widget _barisExtra(
-    String nama,
-    int harga,
-  ) {
+  Widget _barisExtra(Product product) {
+    final int jumlah = _extraQuantities[product.name] ?? 0;
+
     return Row(
       children: [
-        const Icon(
-          Icons.confirmation_number,
-          color: red,
+        _assetIcon(
+          'tiket merah',
           size: 17,
+          color: red,
+          fallback: Icons.confirmation_number,
         ),
-
         const SizedBox(width: 8),
-
         Expanded(
           child: Text(
-            nama,
+            product.name,
             style: const TextStyle(
               fontSize: 13.5,
               color: Color(0xFF333333),
             ),
           ),
         ),
-
         Text(
-          rp(harga),
+          rp(product.price),
           style: const TextStyle(
             fontSize: 13.5,
             color: Color(0xFF555555),
           ),
         ),
-
         const SizedBox(width: 7),
-
         GestureDetector(
-          onTap: () {
-            setState(() {
-              extraTotal += harga;
-            });
-          },
+          onTap: jumlah == 0 ? () => _tambahExtra(product) : null,
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: borderGrey,
-                width: 0.8,
-              ),
+              border: Border.all(color: borderGrey, width: 0.8),
             ),
-            child: const Text(
-              'Tambah',
+            child: Text(
+              jumlah > 0 ? 'Ditambahkan' : 'Tambah',
               style: TextStyle(
                 fontSize: 12.5,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                color: jumlah > 0 ? const Color(0xFF888888) : Colors.black,
               ),
             ),
           ),
@@ -1330,10 +1322,6 @@ Widget _bannerPapiDuo() {
       ],
     );
   }
-
-  // =====================================================
-  // RINGKASAN PEMBAYARAN
-  // =====================================================
 
   Widget _barisHarga(
     String label,
@@ -1372,16 +1360,10 @@ Widget _bannerPapiDuo() {
     );
   }
 
-  // =====================================================
-  // PERIKSA KUPON
-  // =====================================================
-
   Widget _kotakKupon() {
     return Container(
       height: 46,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1401,7 +1383,6 @@ Widget _bannerPapiDuo() {
               ),
             ),
           ),
-
           Icon(
             Icons.chevron_right,
             color: Colors.black,
@@ -1412,17 +1393,11 @@ Widget _bannerPapiDuo() {
     );
   }
 
-  // =====================================================
-  // PESAN UNTUK ORANG LAIN
-  // HANYA MUNCUL PADA DELIVERY
-  // =====================================================
-
   Widget _pesanUntukOrangLain() {
     return GestureDetector(
       onTap: () {
         setState(() {
-          pesanUntukOrangLain =
-              !pesanUntukOrangLain;
+          pesanUntukOrangLain = !pesanUntukOrangLain;
         });
       },
       child: Container(
@@ -1440,10 +1415,11 @@ Widget _bannerPapiDuo() {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.card_giftcard,
-              color: Color(0xFFE3A02F),
+            _assetIcon(
+              'gift',
               size: 27,
+              color: const Color(0xFFE3A02F),
+              fallback: Icons.card_giftcard,
             ),
 
             const SizedBox(width: 12),
@@ -1451,9 +1427,7 @@ Widget _bannerPapiDuo() {
             const Expanded(
               child: Text(
                 'Pesan untuk orang lain?',
-                style: TextStyle(
-                  fontSize: 14.5,
-                ),
+                style: TextStyle(fontSize: 14.5),
               ),
             ),
 
@@ -1463,8 +1437,7 @@ Widget _bannerPapiDuo() {
               visualDensity: VisualDensity.compact,
               onChanged: (value) {
                 setState(() {
-                  pesanUntukOrangLain =
-                      value ?? false;
+                  pesanUntukOrangLain = value ?? false;
                 });
               },
             ),
@@ -1474,112 +1447,49 @@ Widget _bannerPapiDuo() {
     );
   }
 
-  // =====================================================
-  // DAFTAR METODE PEMBAYARAN
-  // COD - EDC - GOPAY - QRIS
-  // BISA SCROLL KE SAMPING
-  // =====================================================
-
   Widget _daftarMetodePembayaran() {
     return SizedBox(
       height: 140,
       child: ListView(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
-        padding: const EdgeInsets.symmetric(
-          vertical: 4,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         children: [
-          // COD
-
           _kartuBayar(
             0,
             'COD',
-            const Icon(
-              Icons.delivery_dining,
+            _assetIcon(
+              'cod',
               size: 46,
-              color: Color(0xFF2E7BC4),
+              fallback: Icons.delivery_dining,
             ),
           ),
-
-          // EDC
 
           _kartuBayar(
             1,
             'EDC',
-            const Icon(
-              Icons.point_of_sale,
+            _assetIcon(
+              'edc',
               size: 46,
-              color: Color(0xFF2E7BC4),
+              fallback: Icons.point_of_sale,
             ),
           ),
-
-          // GOPAY
 
           _kartuBayar(
             2,
             'GoPay',
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1FA6D8),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet,
-                    size: 19,
-                    color: Colors.white,
-                  ),
-
-                  Text(
-                    'gopay',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _ikonGoPay(size: 42),
           ),
-
-          // QRIS
 
           _kartuBayar(
             3,
             'QRIS',
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(
-                  color: const Color(0xFF222222),
-                  width: 1.2,
-                ),
-              ),
-              child: const Icon(
-                Icons.qr_code_2,
-                size: 34,
-                color: Colors.black,
-              ),
-            ),
+            _ikonQRIS(size: 42),
           ),
         ],
       ),
     );
   }
-
-  // =====================================================
-  // KARTU METODE PEMBAYARAN
-  // UKURAN KARTU DAN GARIS BIRU SESUAI REFERENSI
-  // =====================================================
 
   Widget _kartuBayar(
     int index,
@@ -1597,12 +1507,8 @@ Widget _bannerPapiDuo() {
       child: Container(
         width: 96,
         height: 132,
-        margin: const EdgeInsets.only(
-          right: 12,
-        ),
-        padding: const EdgeInsets.only(
-          top: 12,
-        ),
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.only(top: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
@@ -1612,8 +1518,6 @@ Widget _bannerPapiDuo() {
                 : const Color(0xFFE3E3E3),
             width: aktif ? 2.5 : 1,
           ),
-
-          // Bayangan tipis seperti kartu pada gambar referensi.
           boxShadow: const [
             BoxShadow(
               color: Color(0x10000000),
@@ -1626,13 +1530,9 @@ Widget _bannerPapiDuo() {
           children: [
             SizedBox(
               height: 48,
-              child: Center(
-                child: ikon,
-              ),
+              child: Center(child: ikon),
             ),
-
             const SizedBox(height: 12),
-
             Text(
               nama,
               style: const TextStyle(
@@ -1646,76 +1546,98 @@ Widget _bannerPapiDuo() {
     );
   }
 
-  // =====================================================
-  // IKON METODE PEMBAYARAN TERPILIH
-  // =====================================================
+  // Ikon GoPay dibuat dalam satu fungsi agar konsisten di seluruh tampilan.
+  Widget _ikonGoPay({required double size}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1FA6D8),
+        borderRadius: BorderRadius.circular(size * 0.19),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.account_balance_wallet,
+            size: size * 0.45,
+            color: Colors.white,
+          ),
+          Text(
+            'gopay',
+            style: TextStyle(
+              fontSize: size * 0.21,
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Ikon QRIS menggunakan bentuk yang sama di kartu dan ringkasan.
+  Widget _ikonQRIS({required double size}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(size * 0.17),
+        border: Border.all(
+          color: const Color(0xFF222222),
+          width: size * 0.029,
+        ),
+      ),
+      child: Icon(
+        Icons.qr_code_2,
+        size: size * 0.81,
+        color: Colors.black,
+      ),
+    );
+  }
 
   Widget _ikonMetodeTerpilih() {
     switch (selectedPayment) {
       case 0:
-        return const Icon(
-          Icons.delivery_dining,
+        return _assetIcon(
+          'cod',
           size: 29,
-          color: Color(0xFF2E7BC4),
+          fallback: Icons.delivery_dining,
         );
 
       case 1:
-        return const Icon(
-          Icons.point_of_sale,
+        return _assetIcon(
+          'edc',
           size: 29,
-          color: Color(0xFF2E7BC4),
+          fallback: Icons.point_of_sale,
         );
 
       case 2:
-        return Container(
-          width: 29,
-          height: 29,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1FA6D8),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(
-            Icons.account_balance_wallet,
-            size: 18,
-            color: Colors.white,
-          ),
-        );
+        return _ikonGoPay(size: 29);
 
       case 3:
-        return const Icon(
-          Icons.qr_code_2,
-          size: 29,
-          color: Colors.black,
-        );
+        return _ikonQRIS(size: 29);
 
       default:
         return const SizedBox.shrink();
     }
   }
 
-  // =====================================================
-  // BAR BAWAH
-  // ICON PEMBAYARAN + SELECT ADDRESS / PAY
-  // =====================================================
-
   Widget _barBawah() {
-    final bool belumAdaAlamat =
-        isDelivery && !hasAddress;
+    final bool belumAdaAlamat = isDelivery && !hasAddress;
 
-    final bool sudahPilihPembayaran =
-        selectedPayment != -1;
+    final bool sudahPilihPembayaran = selectedPayment != -1;
+
+    final bool adaProduk = _jumlahSemuaItem > 0;
 
     final bool bolehBayar =
-        hasAddressOrTakeaway && sudahPilihPembayaran;
+        hasAddressOrTakeaway && sudahPilihPembayaran && adaProduk;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -1731,8 +1653,6 @@ Widget _bannerPapiDuo() {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // KETERANGAN METODE PEMBAYARAN
-
             if (sudahPilihPembayaran)
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1744,9 +1664,7 @@ Widget _bannerPapiDuo() {
                       child: _ikonMetodeTerpilih(),
                     ),
                   ),
-
                   const SizedBox(width: 8),
-
                   Text(
                     namaMetodePembayaran,
                     style: const TextStyle(
@@ -1767,19 +1685,11 @@ Widget _bannerPapiDuo() {
 
             const SizedBox(height: 9),
 
-            // TOMBOL PEMBAYARAN
-
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: belumAdaAlamat
-                    ? _tambahAlamat
-                    : bolehBayar
-                        ? () {
-                            // TEMPAT PROSES PEMBAYARAN
-                          }
-                        : null,
+                onPressed: bolehBayar ? () {} : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: navy,
                   foregroundColor: Colors.white,
@@ -1810,9 +1720,27 @@ Widget _bannerPapiDuo() {
     );
   }
 
-  // =====================================================
-  // UTILITAS KARTU
-  // =====================================================
+  Widget _assetIcon(
+    String nama, {
+    required double size,
+    Color? color,
+    required IconData fallback,
+  }) {
+    return Image.asset(
+      'assets/icons/$nama.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      color: color,
+      errorBuilder: (context, error, stackTrace) {
+        return Icon(
+          fallback,
+          size: size,
+          color: color,
+        );
+      },
+    );
+  }
 
   BoxDecoration _kartu({
     double radius = 16,
@@ -1830,38 +1758,6 @@ Widget _bannerPapiDuo() {
           offset: Offset(0, 2),
         ),
       ],
-    );
-  }
-
-  // =====================================================
-  // GAMBAR ASSETS
-  // =====================================================
-
-  Widget _gambar(
-    String path,
-    Color warna,
-    String teks, {
-    BoxFit fit = BoxFit.cover,
-  }) {
-    return Image.asset(
-      path,
-      fit: fit,
-      errorBuilder: (context, error, stack) {
-        return Container(
-          color: warna,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(8),
-          child: Text(
-            teks,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 15,
-            ),
-          ),
-        );
-      },
     );
   }
 }
