@@ -71,7 +71,7 @@ class _MenuScreenState extends State<MenuScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: cats.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 18),
+        separatorBuilder: (_, _) => const SizedBox(width: 18),
         itemBuilder: (_, i) {
           final c = cats[i];
           final selected = i == _cat;
@@ -126,7 +126,7 @@ class _MenuScreenState extends State<MenuScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         itemCount: tabs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
           final sel = i == _sub;
           return GestureDetector(
@@ -171,7 +171,7 @@ class _MenuScreenState extends State<MenuScreen> {
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: products.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                separatorBuilder: (_, _) => const SizedBox(height: 16),
                 itemBuilder: (_, i) => MenuProductCard(product: products[i]),
               ),
             ),
