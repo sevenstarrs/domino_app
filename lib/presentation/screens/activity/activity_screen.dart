@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../widgets/empty_state.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -444,11 +445,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final orders = _filteredOrders;
 
     if (orders.isEmpty) {
-      return const Center(
-        child: Text(
-          'Belum ada pesanan',
-          style: TextStyle(fontSize: 16),
-        ),
+      return const EmptyState(
       );
     }
 
