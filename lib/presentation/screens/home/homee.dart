@@ -10,7 +10,7 @@ class Product {
   final String sub;
   final String oldPrice;
   final String price;
-  final String image; // link gambar
+  final String image; 
 
   const Product({
     required this.title,
@@ -46,6 +46,11 @@ class _BerandaState extends State<Beranda> {
   Timer? _timer;
   bool _takeaway = true;   // true = Takeaway, false = Delivery
   int _cart = 0;
+  bool _isLogin = false;   // ubah jadi true untuk melihat tampilan setelah login
+
+  final String _namaAlamat = "Domino's Pizza - Soebrantas Pekanbaru";
+  final String _alamatLengkap =
+      'Jl. HR. Soebrantas, Simpang Baru Kec. Tampan, Kota Pekanbaru, Riau 28282';
 
   final List<Product> _todaySpecial = const [
     Product(
@@ -166,13 +171,14 @@ class _BerandaState extends State<Beranda> {
           child: Column(
             children: [
               _locationCard(),
-              _categories(),                           // <- baru
-             _section('Apps Exclusive', _exclusiveBanner()),
-             _section("Today's Special", _productList(_todaySpecial, 278, tinggi: 265)),
-            _section('Paket Hemat', _productList(_paketHemat, 158, tinggi: 268)),
-            _section('Paket Party', _productList(_paketParty, 158, tinggi: 268)), // <- baru
-            _section('Paket Pizza', _paketPizzaList()),     // <- baru
-            const SizedBox(height: 24),     
+              _categories(),                           
+              _section('Apps Exclusive', _exclusiveBanner()),
+              _section("Today's Special", _productList(_todaySpecial, 278, tinggi: 265)),
+              _section('Paket Hemat', _productList(_paketHemat, 158, tinggi: 268)),
+              _section('Paket Party', _productList(_paketParty, 158, tinggi: 268)), 
+              _section('Paket Pizza', _paketPizzaList()), 
+              if (_isLogin) _promoBox(),
+              const SizedBox(height: 24),     
            ],
           ),
         ),
@@ -212,31 +218,38 @@ class _BerandaState extends State<Beranda> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(bottom: 60),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(
-              _banners.length,
-              (i) => Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.only(bottom: 40),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: i == _bannerIndex ? Colors.white : Colors.white54,
+                  color: Colors.black38,                     // latar gelap transparan
+                  borderRadius: BorderRadius.circular(20),   // bentuk pil
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    _banners.length,
+                    (i) => Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i == _bannerIndex ? Colors.white : Colors.white38,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            )
-          ),
-          ),
+            ),
       ],
     );
   }
 
-  Widget _locationCard() {
+ Widget _locationCard() {
   return Container(
     margin: const EdgeInsets.symmetric(horizontal: 18),
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
@@ -254,7 +267,7 @@ class _BerandaState extends State<Beranda> {
       children: [
         const Text(
           "Hai Domino's lovers!",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
 
@@ -268,7 +281,7 @@ class _BerandaState extends State<Beranda> {
                 () => setState(() => _takeaway = false),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Expanded(
               child: _toggleButton(
                 'Takeaway',
@@ -279,50 +292,76 @@ class _BerandaState extends State<Beranda> {
           ],
         ),
         const SizedBox(height: 8),
-        // kotak alamat
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFCCD2DA)),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Domino's Pizza - Soebrantas Pekanbaru",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Jl. HR. Soebrantas, Simpang Baru Kec. Tampan, '
-                      'Kota Pekanbaru, Riau 28282',
-                      style: TextStyle(fontSize: 11, color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.location_on_outlined, size: 20, color: Colors.black54),
-            ],
-          ),
-        ),
+        _alamatBox(),        
       ],
     ),
   );
 }
-  
+
+  Widget _alamatBox() {
+    // alamat lengkap hanya muncul kalau sudah login DAN memilih Delivery
+    if (_isLogin && !_takeaway) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFCCD2DA)),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _namaAlamat,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _alamatLengkap,
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.location_on_outlined, size: 20, color: Colors.black54),
+          ],
+        ),
+      );
+    }
+
+    // selain itu: kotak abu-abu seperti sebelumnya
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F0F0),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _takeaway ? 'Temukan Outlet Terdekat' : 'Kirim ke...',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, color: Colors.black45),
+            ),
+          ),
+          const Icon(Icons.location_on_outlined, size: 18, color: Colors.black54),
+        ],
+      ),
+    );
+  }
+
   Widget _toggleButton(String teks, bool aktif, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: aktif ? kNavy : Colors.white,
@@ -332,9 +371,9 @@ class _BerandaState extends State<Beranda> {
         child: Text(
           teks,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: aktif ? Colors.white : kNavy,
+            color: aktif ? Colors.white : Colors.black87,
           ),
         ),
       ),
@@ -667,5 +706,38 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
-
+  Widget _promoBox() {
+    return InkWell(
+      onTap: () {
+        // nanti diisi: buka halaman kode promo
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(18, 8, 18, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: kNavy, width: 1.5),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.confirmation_number, color: kNavy, size: 22),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Punya kode promo?',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: kNavy,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.black54),
+          ],
+        ),
+      ),
+    );
+  }
 }
