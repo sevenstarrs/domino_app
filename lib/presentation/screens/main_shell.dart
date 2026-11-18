@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'activity/activity_screen.dart';
-import 'home/home_screen.dart';
+import 'home/homee.dart';
 import 'menu/menu_screen.dart';
 import 'profile/profile_screen.dart';
 
@@ -16,7 +16,7 @@ class _MainShellState extends State<MainShell> {
   int _index = 0;
 
   final _pages = const [
-    HomeScreen(),
+    Beranda(),
     MenuScreen(),
     ActivityScreen(),
     ProfileScreen(),
