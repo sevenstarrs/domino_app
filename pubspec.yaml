@@ -63,9 +63,6 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    
-  # To add assets to your application, add an assets section, like this:
-  assets:
     - assets/bread.jpeg
     - assets/dessert.webp
     - assets/drinks.webp
