@@ -157,7 +157,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   16,
                   16,
                   16,
-                  140,
+                  110,
                 ),
                 itemCount: filteredProducts.length,
                 separatorBuilder: (_, index) =>
