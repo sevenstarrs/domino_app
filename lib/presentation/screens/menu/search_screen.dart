@@ -20,7 +20,6 @@ class _SearchScreenState extends State<SearchScreen> {
       super.dispose();
     }
 
-  // [BARU] pindah tab di MainShell lalu tutup halaman search
   void _goToTab(int index) {
     shellIndex.value = index;
     Navigator.pop(context);

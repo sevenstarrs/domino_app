@@ -9,9 +9,6 @@ import 'product_image.dart';
 
 class MenuProductCard extends StatelessWidget {
   final Product product;
-
-  /// true = tombol "Tambah" membuka halaman detail (kategori Sides s/d Dessert).
-  /// false = tampilan lama (AddButton), dipakai Promo, Pizza, dan Drinks.
   final bool enableDetail;
 
   const MenuProductCard({
@@ -29,8 +26,6 @@ class MenuProductCard extends StatelessWidget {
     );
   }
 
-  // Tombol "Tambah" memakai AddButton asli (sama persis dengan Promo & Pizza).
-  // Kalau produk sudah ada di keranjang, tampil "N barang" dengan ukuran yang sama.
   Widget _actionButton(BuildContext context) {
     return ValueListenableBuilder<List<CartLine>>(
       valueListenable: CartService.instance.lines,
@@ -45,7 +40,6 @@ class MenuProductCard extends StatelessWidget {
               : Stack(
                   alignment: Alignment.center,
                   children: [
-                    // AddButton tak terlihat, hanya untuk menyamakan ukuran
                     const Opacity(
                       opacity: 0,
                       child: IgnorePointer(child: AddButton()),
@@ -85,7 +79,7 @@ class MenuProductCard extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: AppColors.border,
         ),
@@ -97,7 +91,7 @@ class MenuProductCard extends StatelessWidget {
             color: product.imageColor,
             icon: product.imageIcon,
             image: product.image,
-            height: 130,
+            height: 128,
             width: double.infinity,
           ),
 
@@ -165,8 +159,6 @@ class MenuProductCard extends StatelessWidget {
     );
 
     if (!enableDetail) return card;
-
-    // Seluruh kartu bisa ditekan untuk membuka detail
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => _openDetail(context),

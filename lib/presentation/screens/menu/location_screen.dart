@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Halaman "Lokasi / Toko Terdekat" (tampilan saja, tidak ada fungsi lokasi).
-/// Hanya tombol kembali (panah) yang berfungsi.
 class LocationScreen extends StatelessWidget {
   const LocationScreen({super.key});
 
@@ -294,7 +292,7 @@ class LocationScreen extends StatelessWidget {
                                   width: 200,
                                   height: 40,
                                   child: OutlinedButton(
-                                    onPressed: () {}, // tidak berfungsi
+                                    onPressed: () {}, 
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: Colors.black,
                                       side: const BorderSide(

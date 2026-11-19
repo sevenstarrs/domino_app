@@ -225,7 +225,7 @@ class DummyData {
     ],
   };
 
-// =========================
+  // =========================
   // TOPPING
   // =========================
     static const _crustsMedium = [
@@ -238,7 +238,7 @@ class DummyData {
     ];
 
   static const _toppingsPremium = [
-    Topping('Rustic Sauce', image: 'assets/images/rustic sauce.png'),
+          Topping('Rustic Sauce', image: 'assets/images/rustic sauce.png'),
           Topping('Mayonnaise', image: 'assets/images/mayo.png'),
           Topping('Mozarella Cheese', image: 'assets/images/mozarella.png'),
           Topping('Chicken Sausage', image: 'assets/images/chicken.png'),
@@ -295,7 +295,7 @@ class DummyData {
         image: 'assets/images/sultan1.jpg',
         sizes: [
           ProductSize('Large',
-              price: 107727, // ganti dengan harga Large di aplikasi
+              price: 150000, 
               image: 'assets/images/large.png',
               toppingPrice: 8182,
               crusts: [CrustOption('Overload')]), 
@@ -312,10 +312,10 @@ class DummyData {
         image: 'assets/images/sultan2.jpg',
         sizes: [
           ProductSize('Large',
-              price: 107727, // ganti dengan harga Large di aplikasi
+              price: 150000, 
               image: 'assets/images/large.png',
               toppingPrice: 8182,
-              crusts: [CrustOption('Classic Handtossed')]), 
+              crusts: [CrustOption('Overload')]), 
         ],
         defaultSize: 0, 
         toppings: _toppingsPremium,
@@ -326,11 +326,15 @@ class DummyData {
         price: 150000,
         imageColor: Color(0xFFB9BEC6),
         image: 'assets/images/sultan3.jpg',
-        sizes: [ProductSize('Large', icon: Icons.local_pizza)],
-        crust: 'Overload',
-        toppings: _toppingsVolcano,
-        maxToppings: 11,
-        toppingPrice: 8182,
+        sizes: [
+          ProductSize('Large',
+              price: 150000, 
+              image: 'assets/images/large.png',
+              toppingPrice: 8182,
+              crusts: [CrustOption('Overload')]), 
+        ],
+        defaultSize: 0, 
+        toppings: _toppingsPremium,
       ),
     ],
 
@@ -343,10 +347,10 @@ class DummyData {
         image: 'assets/images/viral1.jpg',
         sizes: [
           ProductSize('Large',
-              price: 107727, // ganti dengan harga Large di aplikasi
+              price: 129090, 
               image: 'assets/images/large.png',
               toppingPrice: 8182,
-              crusts: [CrustOption('Classic Handtossed')]), // sesuaikan kalau Large beda
+              crusts: [CrustOption('Classic Handtossed')]), 
           ProductSize('Medium',
               image: 'assets/images/medium.png', 
               toppingPrice: 6364,
@@ -367,7 +371,7 @@ class DummyData {
               toppingPrice: 6364,
               crusts: _crustsMedium),
         ],
-        defaultSize: 2, 
+        defaultSize: 0, 
         toppings: _toppingsPremium,
       ),
       Product(
@@ -401,10 +405,10 @@ class DummyData {
               hasToppings: false,
               crusts: [CrustOption('Classic Handtossed')]),
           ProductSize('Large',
-              price: 107727, // ganti dengan harga Large di aplikasi
+              price: 107727, 
               image: 'assets/images/large.png',
               toppingPrice: 8182,
-              crusts: [CrustOption('Classic Handtossed')]), // sesuaikan kalau Large beda
+              crusts: [CrustOption('Classic Handtossed')]), 
           ProductSize('Medium',
               image: 'assets/images/medium.png', 
               toppingPrice: 6364,
@@ -436,7 +440,7 @@ class DummyData {
               crusts: _crustsMedium),
         ],
         defaultSize: 2, 
-        toppings: _toppingsPremium,
+        toppings: _toppingsVolcano,
       ),
       Product(
         name: 'Extravaganzza',
@@ -482,7 +486,7 @@ class DummyData {
               price: 85454, 
               image: 'assets/images/large.png',
               toppingPrice: 8182,
-              crusts: [CrustOption('Classic Handtossed')]), // sesuaikan kalau Large beda
+              crusts: [CrustOption('Classic Handtossed')]),
           ProductSize('Medium',
               image: 'assets/images/medium.png', 
               toppingPrice: 6364,
@@ -786,10 +790,10 @@ class DummyData {
         imageIcon: Icons.local_drink,
         image: 'assets/images/Drinks2.jpg',
         sizes: [
-          ProductSize('1 Liter', price: 21818, icon: Icons.local_drink,
-              iconColor: Color(0xFFD32F2F)),
-          ProductSize('390 ml', icon: Icons.local_drink,
-              iconColor: Color(0xFFD32F2F)),
+          ProductSize('1 Liter', price: 21818, image: 'assets/images/size.png',
+              icon: Icons.local_drink, iconColor: Color(0xFFD32F2F)),
+          ProductSize('390 ml', image: 'assets/images/size.png',
+              icon: Icons.local_drink, iconColor: Color(0xFFD32F2F)),
         ],
         defaultSize: 1, 
         crust: 'Coca Cola',
@@ -802,10 +806,10 @@ class DummyData {
         imageIcon: Icons.local_drink,
         image: 'assets/images/Drinks3.jpg',
         sizes: [
-          ProductSize('1 Liter', price: 21818, icon: Icons.local_drink,
-              iconColor: Color(0xFFD32F2F)),
-          ProductSize('390 ml', icon: Icons.local_drink,
-              iconColor: Color(0xFFD32F2F)),
+          ProductSize('1 Liter', price: 21818, image: 'assets/images/size.png',
+              icon: Icons.local_drink, iconColor: Color(0xFFD32F2F)),
+          ProductSize('390 ml', image: 'assets/images/size.png',
+              icon: Icons.local_drink, iconColor: Color(0xFFD32F2F)),
         ],
         defaultSize: 1, 
         crust: 'Sprite',
@@ -818,7 +822,8 @@ class DummyData {
         imageIcon: Icons.local_drink,
         image: 'assets/images/Drinks4.jpg',
         sizes: [
-          ProductSize('350 ml', icon: Icons.local_drink, iconColor: Color(0xFFD32F2F)),
+          ProductSize('350 ml', image: 'assets/images/size.png',
+              icon: Icons.local_drink, iconColor: Color(0xFFD32F2F)),
         ],
         defaultSize: 1, 
         crust: 'Frestea Apple',
