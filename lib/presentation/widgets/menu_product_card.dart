@@ -1,23 +1,88 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/cart_service.dart';
 import '../../data/models/product.dart';
+import '../screens/menu/product_detail_screen.dart';
 import 'add_button.dart';
 import 'price_text.dart';
 import 'product_image.dart';
 
-/// Kartu besar di halaman Menu
 class MenuProductCard extends StatelessWidget {
   final Product product;
-  const MenuProductCard({super.key, required this.product});
+  final bool enableDetail;
+
+  const MenuProductCard({
+    super.key,
+    required this.product,
+    this.enableDetail = false,
+  });
+
+  void _openDetail(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailScreen(product: product),
+      ),
+    );
+  }
+
+  Widget _actionButton(BuildContext context) {
+    return ValueListenableBuilder<List<CartLine>>(
+      valueListenable: CartService.instance.lines,
+      builder: (_, _, _) {
+        final qty = CartService.instance.quantityOf(product);
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openDetail(context),
+          child: qty == 0
+              ? const IgnorePointer(child: AddButton())
+              : Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Opacity(
+                      opacity: 0,
+                      child: IgnorePointer(child: AddButton()),
+                    ),
+                    Positioned.fill(
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '$qty barang',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
+    final card = Container(
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.border,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,32 +90,65 @@ class MenuProductCard extends StatelessWidget {
           ProductImage(
             color: product.imageColor,
             icon: product.imageIcon,
-            height: 190,
+            image: product.image,
+            height: 128,
             width: double.infinity,
           ),
-          const SizedBox(height: 12),
-          Text(product.name,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text(product.description,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.textGrey, fontSize: 15)),
+
           const SizedBox(height: 8),
+
+          Text(
+            product.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+
+          const SizedBox(height: 3),
+
+          Text(
+            product.description,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color.fromARGB(255, 120, 120, 120),
+              fontSize: 12,
+            ),
+          ),
+
+          const SizedBox(height: 1),
+
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              PriceText(
-                  price: product.price, originalPrice: product.originalPrice),
+              Expanded(
+                child: PriceText(
+                  price: product.price,
+                  originalPrice: product.originalPrice,
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const AddButton(),
+                  enableDetail ? _actionButton(context) : const AddButton(),
+
                   if (product.customizable) ...[
-                    const SizedBox(height: 6),
-                    const Text('Dapat disesuaikan',
-                        style: TextStyle(color: AppColors.textGrey)),
+                    const SizedBox(height: 4),
+
+                    const Text(
+                      'Dapat disesuaikan',
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 120, 120, 120),
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -58,6 +156,13 @@ class MenuProductCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+
+    if (!enableDetail) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _openDetail(context),
+      child: card,
     );
   }
 }

@@ -542,10 +542,11 @@ class _BerandaState extends State<Beranda> {
       height: tinggi,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: items.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 20),
-        itemBuilder: (context, i) => _productCard(items[i], lebarKartu),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: products.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (_, i) =>
+            HorizontalProductCard(product: products[i], width: width),
       ),
     );
   }
