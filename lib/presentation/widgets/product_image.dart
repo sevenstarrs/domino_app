@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Placeholder gambar produk. Ganti isi dengan Image.network / Image.asset
-/// saat sudah punya gambar asli.
+/// Gambar produk. Kalau [image] diisi, tampil gambar dari asset.
+/// Kalau kosong (atau file tidak ditemukan), tampil placeholder berwarna + ikon.
 class ProductImage extends StatelessWidget {
   final Color color;
   final IconData icon;
   final double? height;
   final double? width;
   final double radius;
+  final String? image; // [BARU] path asset, contoh 'assets/images/products/papi_duo.jpg'
 
   const ProductImage({
     super.key,
@@ -16,25 +17,38 @@ class ProductImage extends StatelessWidget {
     this.height,
     this.width,
     this.radius = 12,
+    this.image, // [BARU]
   });
 
   @override
   Widget build(BuildContext context) {
+    // Placeholder lama (gradient + ikon)
+    final placeholder = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withValues(alpha: 0.75), color],
+        ),
+      ),
+      child: Center(
+        child: Icon(icon, size: 56, color: Colors.white.withValues(alpha: 0.9)),
+      ),
+    );
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: Container(
+      child: SizedBox(
         height: height,
         width: width,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.75), color],
-          ),
-        ),
-        child: Center(
-          child: Icon(icon, size: 56, color: Colors.white.withOpacity(0.9)),
-        ),
+        child: image == null
+            ? placeholder
+            : Image.asset(
+                image!,
+                fit: BoxFit.cover,
+                cacheWidth: 800,
+                //errorBuilder: (_, __, ___) => placeholder,
+              ),
       ),
     );
   }

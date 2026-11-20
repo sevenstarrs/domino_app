@@ -1,72 +1,87 @@
-
 import 'package:flutter/foundation.dart';
+import '../cart_service.dart';
 import '../models/product.dart';
 
+/// Satu baris keranjang untuk ditampilkan di halaman Keranjang.
+///
+/// Sekarang berupa "potret" dari [CartLine] milik CartService, jadi selain
+/// produk dan jumlah, ia juga membawa ukuran, harga satuan, dan catatan.
+/// Kalau dibuat manual (mis. produk tambahan Extra Chili), harga satuan
+/// otomatis memakai product.price.
 class CartItem {
   final Product product;
-  int quantity;
+  final int quantity;
+  final String? sizeLabel;
+  final int unitPrice;
+  final String? note;
 
   CartItem({
     required this.product,
     this.quantity = 1,
-  });
+    this.sizeLabel,
+    int? unitPrice,
+    this.note,
+  }) : unitPrice = unitPrice ?? product.price;
+
+  int get total => unitPrice * quantity;
 }
 
+/// Pintu masuk keranjang untuk halaman Keranjang dan tombol "Tambah" cepat.
+///
+/// API lama tetap sama (items, totalQuantity, subtotal, add, increase,
+/// decrease, remove, clear, addListener), tetapi datanya TIDAK disimpan di sini
+/// lagi. Semua dibaca dan ditulis ke [CartService] supaya hanya ada satu
+/// keranjang di seluruh aplikasi.
 class CartManager extends ChangeNotifier {
-  CartManager._();
+  CartManager._() {
+    // Setiap perubahan di CartService (mis. dari halaman detail produk)
+    // otomatis memberi tahu pendengar CartManager (halaman Keranjang).
+    CartService.instance.lines.addListener(notifyListeners);
+  }
 
   static final CartManager instance = CartManager._();
 
-  final List<CartItem> _items = [];
+  CartService get _service => CartService.instance;
 
-  List<CartItem> get items => List.unmodifiable(_items);
-
-  int get totalQuantity =>
-      _items.fold(0, (total, item) => total + item.quantity);
-
-  int get subtotal => _items.fold(
-        0,
-        (total, item) => total + item.product.price * item.quantity,
+  List<CartItem> get items => List.unmodifiable(
+        _service.lines.value.map(
+          (l) => CartItem(
+            product: l.product,
+            quantity: l.quantity,
+            sizeLabel: l.sizeLabel,
+            unitPrice: l.unitPrice,
+            note: l.note,
+          ),
+        ),
       );
 
-  void add(Product product) {
-    final index = _items.indexWhere(
-      (item) =>
-          item.product.name == product.name &&
-          item.product.price == product.price,
-    );
+  int get totalQuantity => _service.totalItems;
 
-    if (index >= 0) {
-      _items[index].quantity++;
-    } else {
-      _items.add(CartItem(product: product));
-    }
+  int get subtotal => _service.totalPrice;
 
-    notifyListeners();
-  }
+  /// Tambah 1 produk (tombol "Tambah" cepat tanpa pilihan ukuran/topping).
+  void add(Product product) => _service.add(product, 1);
 
-  void increase(CartItem item) {
-    item.quantity++;
-    notifyListeners();
-  }
+  void increase(CartItem item) => _service.setQuantity(
+        item.product,
+        item.quantity + 1,
+        sizeLabel: item.sizeLabel,
+        note: item.note,
+      );
 
-  void decrease(CartItem item) {
-    if (item.quantity > 1) {
-      item.quantity--;
-    } else {
-      _items.remove(item);
-    }
+  /// Kalau jumlah tinggal 1, baris dihapus.
+  void decrease(CartItem item) => _service.setQuantity(
+        item.product,
+        item.quantity - 1,
+        sizeLabel: item.sizeLabel,
+        note: item.note,
+      );
 
-    notifyListeners();
-  }
+  void remove(CartItem item) => _service.remove(
+        item.product,
+        sizeLabel: item.sizeLabel,
+        note: item.note,
+      );
 
-  void remove(CartItem item) {
-    _items.remove(item);
-    notifyListeners();
-  }
-
-  void clear() {
-    _items.clear();
-    notifyListeners();
-  }
+  void clear() => _service.clear();
 }

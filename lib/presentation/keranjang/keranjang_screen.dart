@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/utils/formatter.dart';
 import '../../data/cart/cart_manager.dart';
 import '../../data/models/product.dart';
 
@@ -10,22 +12,19 @@ class KeranjangScreen extends StatefulWidget {
 }
 
 class _KeranjangScreenState extends State<KeranjangScreen> {
-
   static const Color navy = Color(0xFF1B4F7C);
   static const Color disabledBlue = Color(0xFF9DC3E7);
   static const Color borderGrey = Color(0xFFDDDDDD);
+  static const Color dividerGrey = Color(0xFFEEEEEE);
   static const Color textGrey = Color(0xFF8A8A8A);
   static const Color red = Color(0xFFE31837);
   static const Color couponBorder = Color(0xFFF0C96A);
-
-  static const String extraChiliAsset = 'assets/images/chili.png';
-
-  static const String blueEcobagAsset = 'assets/images/ecobag.png';
 
   static const Product extraChili = Product(
     name: 'Extra Chili Sachet',
     description: "Domino's Extra Chili Sachet",
     price: 500,
+    image: 'assets/images/chili.png',
     imageColor: Color(0xFFE8E8E8),
     imageIcon: Icons.local_fire_department,
   );
@@ -34,26 +33,27 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     name: 'Blue Ecobag 12"',
     description: "Domino's Blue Ecobag 12\"",
     price: 5000,
-    imageUrl: blueEcobagAsset,
+    image: 'assets/images/ecobag.png',
     imageColor: Color(0xFF087E9B),
     imageIcon: Icons.shopping_bag,
   );
 
+  static const _extras = [extraChili, blueEcobag];
+
+  static const _metode = ['COD', 'EDC', 'GoPay', 'QRIS'];
+
+  static final Map<String, int> _extraQuantities = {};
+
   bool isDelivery = false;
   bool hasAddress = false;
   bool pesanUntukOrangLain = false;
-
   String alamatPengiriman = '';
-  // Data tambahan disimpan secara static agar tidak hilang saat halaman
-  // KeranjangScreen ditutup sementara dan dibuka kembali dalam sesi aplikasi.
-  static final Map<String, int> _extraQuantities = {};
-
-  int get extraTotal {
-    return (extraChili.price * (_extraQuantities[extraChili.name] ?? 0)) +
-        (blueEcobag.price * (_extraQuantities[blueEcobag.name] ?? 0));
-  }
-
   int selectedPayment = -1;
+
+  int _qtyExtra(Product p) => _extraQuantities[p.name] ?? 0;
+
+  int get extraTotal =>
+      _extras.fold<int>(0, (sum, p) => sum + p.price * _qtyExtra(p));
 
   @override
   void initState() {
@@ -62,24 +62,13 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   }
 
   void _onCartChanged() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     CartManager.instance.removeListener(_onCartChanged);
     super.dispose();
-  }
-
-  String rp(int v, {String prefix = 'Rp '}) {
-    final s = v.toString().replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+$)'),
-      (m) => '${m[1]}.',
-    );
-
-    return '$prefix$s';
   }
 
   int get subtotal => CartManager.instance.subtotal + extraTotal;
@@ -90,25 +79,11 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
   bool get hasAddressOrTakeaway => !isDelivery || hasAddress;
 
-  String get namaMetodePembayaran {
-    switch (selectedPayment) {
-      case 0:
-        return 'COD';
-      case 1:
-        return 'EDC';
-      case 2:
-        return 'GoPay';
-      case 3:
-        return 'QRIS';
-      default:
-        return '';
-    }
-  }
+  String get namaMetodePembayaran =>
+      selectedPayment >= 0 ? _metode[selectedPayment] : '';
 
   void _pilihDelivery() {
-    setState(() {
-      isDelivery = true;
-    });
+    setState(() => isDelivery = true);
 
     if (hasAddress) return;
 
@@ -116,19 +91,10 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       context: context,
       builder: (ctx) => Dialog(
         backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 25,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
-        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 25),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
-            12,
-          ),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,18 +110,13 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
               const SizedBox(height: 12),
               const Text(
                 'Silakan tambahkan alamat pengiriman Anda untuk melanjutkan.',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  color: Color(0xFF222222),
-                ),
+                style: TextStyle(fontSize: 13.5, color: Color(0xFF222222)),
               ),
               const SizedBox(height: 14),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                  },
+                  onPressed: () => Navigator.pop(ctx),
                   child: const Text(
                     'OK',
                     style: TextStyle(
@@ -174,9 +135,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   }
 
   Future<void> _tambahAlamat() async {
-    final controller = TextEditingController(
-      text: alamatPengiriman,
-    );
+    final controller = TextEditingController(text: alamatPengiriman);
 
     final hasil = await showDialog<String>(
       context: context,
@@ -184,39 +143,26 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         backgroundColor: Colors.white,
         title: const Text(
           'Tambah alamat pengiriman',
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
         ),
         content: TextField(
           controller: controller,
-          autofocus: false,
           maxLines: 3,
           decoration: InputDecoration(
             hintText: 'Masukkan alamat lengkap',
-            hintStyle: const TextStyle(
-              fontSize: 13,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(9),
-            ),
+            hintStyle: const TextStyle(fontSize: 13),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-            },
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () {
               final value = controller.text.trim();
-
-              if (value.isNotEmpty) {
-                Navigator.pop(ctx, value);
-              }
+              if (value.isNotEmpty) Navigator.pop(ctx, value);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: navy,
@@ -229,41 +175,28 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       ),
     );
 
-    if (!mounted) {
-      controller.dispose();
-      return;
-    }
-
-    if (hasil != null && hasil.trim().isNotEmpty) {
-      setState(() {
-        alamatPengiriman = hasil.trim();
-        hasAddress = true;
-        isDelivery = true;
-      });
-    }
-
     controller.dispose();
+    if (!mounted || hasil == null) return;
+
+    setState(() {
+      alamatPengiriman = hasil;
+      hasAddress = true;
+      isDelivery = true;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
         leadingWidth: 56,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: 24,
-          ),
-          onPressed: () {
-            Navigator.maybePop(context);
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+          onPressed: () => Navigator.maybePop(context),
         ),
         titleSpacing: 0,
         title: const Text(
@@ -276,24 +209,14 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            thickness: 3,
-            color: Color(0xFFEEEEEE),
-          ),
+          child: Divider(height: 1, thickness: 3, color: dividerGrey),
         ),
       ),
-
       body: Column(
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                18,
-                20,
-                18,
-                20,
-              ),
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -303,21 +226,11 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   _kartuRingkasanPesanan(),
                   const SizedBox(height: 18),
 
-                  const Text(
-                    'Eksklusif untuk Anda',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  _judul('Eksklusif untuk Anda'),
                   const SizedBox(height: 3),
-
                   const Text(
                     'Berikut beberapa penawaran terbaik untuk Anda!',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF333333),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF333333)),
                   ),
                   const SizedBox(height: 12),
 
@@ -327,34 +240,15 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   _kartuExtra(),
                   const SizedBox(height: 16),
 
-                  const Divider(
-                    height: 1,
-                    thickness: 2,
-                    color: Color(0xFFEEEEEE),
-                  ),
+                  _garis(2),
                   const SizedBox(height: 14),
 
-                  const Text(
-                    'Ringkasan Pembayaran',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  _judul('Ringkasan Pembayaran'),
                   const SizedBox(height: 12),
 
-                  _barisHarga(
-                    'Harga',
-                    rp(subtotal),
-                    grey: true,
-                  ),
+                  _barisHarga('Harga', rupiah(subtotal), grey: true),
                   const SizedBox(height: 10),
-
-                  _barisHarga(
-                    'Pajak 10%',
-                    rp(pajak),
-                    grey: true,
-                  ),
+                  _barisHarga('Pajak 10%', rupiah(pajak), grey: true),
 
                   if (isDelivery) ...[
                     const SizedBox(height: 10),
@@ -366,17 +260,12 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   ],
 
                   const SizedBox(height: 12),
-
-                  const Divider(
-                    height: 1,
-                    thickness: 2,
-                    color: Color(0xFFEEEEEE),
-                  ),
+                  _garis(2),
                   const SizedBox(height: 12),
 
                   _barisHarga(
                     'Jumlah Pembayaran',
-                    rp(total, prefix: 'Rp. '),
+                    rupiah(total).replaceFirst('Rp ', 'Rp. '),
                     bold: true,
                   ),
                   const SizedBox(height: 14),
@@ -388,13 +277,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
                   const SizedBox(height: 16),
 
-                  const Text(
-                    'Metode Pembayaran',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  _judul('Metode Pembayaran'),
                   const SizedBox(height: 12),
 
                   _daftarMetodePembayaran(),
@@ -402,22 +285,15 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
                   RichText(
                     text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.black),
                       children: [
                         TextSpan(
                           text: 'Catatan ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                         TextSpan(
                           text: '(opsional)',
-                          style: TextStyle(
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(fontSize: 14),
                         ),
                       ],
                     ),
@@ -425,9 +301,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   const SizedBox(height: 10),
 
                   TextField(
-                    style: const TextStyle(
-                      fontSize: 14.5,
-                    ),
+                    style: const TextStyle(fontSize: 14.5),
                     decoration: InputDecoration(
                       hintText: 'Misalnya, tambahkan lagi!',
                       hintStyle: const TextStyle(
@@ -442,15 +316,11 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: borderGrey,
-                        ),
+                        borderSide: const BorderSide(color: borderGrey),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: navy,
-                        ),
+                        borderSide: const BorderSide(color: navy),
                       ),
                     ),
                   ),
@@ -467,20 +337,26 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
+  Widget _judul(String teks) => Text(
+    teks,
+    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+  );
+
+  Widget _garis([double tebal = 1]) =>
+      Divider(height: 1, thickness: tebal, color: dividerGrey);
+
   Widget _kartuPengambilan() {
     return Container(
-      
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDADADA), width: 0.7,), boxShadow: const [],
+        border: Border.all(color: const Color(0xFFDADADA), width: 0.7),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             height: 48,
-            margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -502,9 +378,11 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: _tombolToggle('Takeaway', !isDelivery, () {
-                    setState(() => isDelivery = false);
-                  }),
+                  child: _tombolToggle(
+                    'Takeaway',
+                    !isDelivery,
+                    () => setState(() => isDelivery = false),
+                  ),
                 ),
               ],
             ),
@@ -515,11 +393,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  Widget _tombolToggle(
-    String label,
-    bool aktif,
-    VoidCallback onTap,
-  ) {
+  Widget _tombolToggle(String label, bool aktif, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -550,19 +424,18 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
           GestureDetector(
             onTap: _tambahAlamat,
             child: Container(
-              constraints: const BoxConstraints(
-                minHeight: 38,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 7,
-              ),
+              constraints: const BoxConstraints(minHeight: 38),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 color: const Color(0xFFF4F4F4),
                 border: Border.all(color: const Color(0xFFD8D8D8), width: 1),
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x0D000000), blurRadius: 2, offset: Offset(0, 1)),
+                  BoxShadow(
+                    color: Color(0x0D000000),
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
                 ],
               ),
               child: Row(
@@ -572,7 +445,9 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       hasAddress ? alamatPengiriman : 'Kirim ke',
                       style: TextStyle(
                         fontSize: 12.5,
-                        color: hasAddress ? const Color(0xFF333333) : const Color(0xFF999999),
+                        color: hasAddress
+                            ? const Color(0xFF333333)
+                            : const Color(0xFF999999),
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -588,38 +463,12 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             ),
           ),
 
-          const SizedBox(height: 14),
-
-          const Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFFEEEEEE),
-          ),
+          ..._blokOpsi('Opsi Pengiriman', 'Jaminan 30 menit'),
           const SizedBox(height: 12),
 
-          Row(
+          const Row(
             children: [
-              const Text(
-                'Opsi Pengiriman',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _chipJaminan('Jaminan 30 menit'),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          _kotakNow(),
-          const SizedBox(height: 12),
-
-          // Baris informasi statis: tidak memiliki aksi saat disentuh.
-          Row(
-            children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Pengiriman GRATIS diterapkan',
                   style: TextStyle(
@@ -629,11 +478,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   ),
                 ),
               ),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.black,
-                size: 24,
-              ),
+              Icon(Icons.keyboard_arrow_down, color: Colors.black, size: 24),
             ],
           ),
         ],
@@ -647,26 +492,18 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.location_on,
-                color: red,
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-
-              const Expanded(
+              Icon(Icons.location_on, color: red, size: 22),
+              SizedBox(width: 10),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Penjemputan dari 2.2602 km',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        color: textGrey,
-                      ),
+                      style: TextStyle(fontSize: 12.5, color: textGrey),
                     ),
                     SizedBox(height: 4),
                     Text(
@@ -688,44 +525,34 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   ],
                 ),
               ),
-
-              const Icon(
-                Icons.chevron_right,
-                color: Colors.black,
-                size: 24,
-              ),
+              Icon(Icons.chevron_right, color: Colors.black, size: 24),
             ],
           ),
 
-          const SizedBox(height: 14),
-
-          const Divider(
-            height: 1,
-            thickness: 1,
-            color: Color(0xFFEEEEEE),
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              const Text(
-                'Opsi Bawa Pulang',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _chipJaminan('Jaminan 15 menit'),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          _kotakNow(),
+          ..._blokOpsi('Opsi Bawa Pulang', 'Jaminan 15 menit'),
         ],
       ),
     );
+  }
+
+  List<Widget> _blokOpsi(String judul, String jaminan) {
+    return [
+      const SizedBox(height: 14),
+      _garis(),
+      const SizedBox(height: 12),
+      Row(
+        children: [
+          Text(
+            judul,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 8),
+          _chipJaminan(jaminan),
+        ],
+      ),
+      const SizedBox(height: 10),
+      _kotakNow(),
+    ];
   }
 
   Widget _chipJaminan(String teks) {
@@ -735,20 +562,13 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [
-            Color(0xFF85B94C),
-            Color(0xFFE2F3C9),
-            Color(0xFF85B94C),
-          ],
+          colors: [Color(0xFF85B94C), Color(0xFFE2F3C9), Color(0xFF85B94C)],
           stops: [0.0, 0.5, 1.0],
         ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 7,
-          vertical: 1,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(19),
@@ -771,10 +591,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 11),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(
-          color: const Color(0xFF9BCB55),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0xFF9BCB55), width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -785,8 +602,8 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             color: Colors.black87,
             fallback: Icons.bolt_outlined,
           ),
-          SizedBox(width: 8),
-          Expanded(
+          const SizedBox(width: 8),
+          const Expanded(
             child: Text(
               'Now',
               style: TextStyle(
@@ -796,11 +613,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
               ),
             ),
           ),
-          Icon(
-            Icons.radio_button_checked,
-            color: navy,
-            size: 20,
-          ),
+          const Icon(Icons.radio_button_checked, color: navy, size: 20),
         ],
       ),
     );
@@ -808,26 +621,21 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
   int get _jumlahSemuaItem =>
       CartManager.instance.totalQuantity +
-      (_extraQuantities[extraChili.name] ?? 0) +
-      (_extraQuantities[blueEcobag.name] ?? 0);
+      _extras.fold<int>(0, (sum, p) => sum + _qtyExtra(p));
 
-  bool _isExtra(Product product) =>
-      product.name == extraChili.name || product.name == blueEcobag.name;
+  bool _isExtra(Product product) => _extras.any((e) => e.name == product.name);
 
   Future<bool> _konfirmasiHapusItem() async {
+    const gayaTombol = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
+
     final hasil = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 15,
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         titlePadding: const EdgeInsets.fromLTRB(48, 24, 40, 0),
         title: const Text(
           'Hapus Item?',
@@ -840,11 +648,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         contentPadding: const EdgeInsets.fromLTRB(48, 12, 40, 0),
         content: const Text(
           'Ini adalah barang terakhir di keranjang Anda. Setelah ini, keranjang Anda akan kosong.',
-          style: TextStyle(
-            fontSize: 18,
-            height: 1.2,
-            color: Color(0xFF222222),
-          ),
+          style: TextStyle(fontSize: 18, height: 1.2, color: Color(0xFF222222)),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 12, 28, 12),
         buttonPadding: const EdgeInsets.symmetric(horizontal: 10),
@@ -853,10 +657,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             style: TextButton.styleFrom(
               foregroundColor: Colors.black,
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+              textStyle: gayaTombol,
             ),
             child: const Text('MEMBATALKAN'),
           ),
@@ -864,10 +665,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
               foregroundColor: Colors.black,
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+              textStyle: gayaTombol,
             ),
             child: const Text('OKE'),
           ),
@@ -890,7 +688,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   }
 
   Future<void> _kurangiExtra(Product product) async {
-    final jumlah = _extraQuantities[product.name] ?? 0;
+    final jumlah = _qtyExtra(product);
     if (jumlah <= 0) return;
 
     if (jumlah == 1 && _jumlahSemuaItem == 1) {
@@ -907,10 +705,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   }
 
   void _tambahExtra(Product product) {
-    setState(() {
-      _extraQuantities[product.name] =
-          (_extraQuantities[product.name] ?? 0) + 1;
-    });
+    setState(() => _extraQuantities[product.name] = _qtyExtra(product) + 1);
   }
 
   void _editPesanan(Product product) {
@@ -935,31 +730,20 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   Widget _kartuRingkasanPesanan() {
     final items = <CartItem>[
       ...CartManager.instance.items,
-      if ((_extraQuantities[extraChili.name] ?? 0) > 0)
-        CartItem(
-          product: extraChili,
-          quantity: _extraQuantities[extraChili.name]!,
-        ),
-      if ((_extraQuantities[blueEcobag.name] ?? 0) > 0)
-        CartItem(
-          product: blueEcobag,
-          quantity: _extraQuantities[blueEcobag.name]!,
-        ),
+      for (final p in _extras)
+        if (_qtyExtra(p) > 0) CartItem(product: p, quantity: _qtyExtra(p)),
     ];
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.all(16),
       decoration: _kartu(radius: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Ringkasan Pesanan',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 14),
 
@@ -970,10 +754,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                 child: Text(
                   'Keranjang masih kosong. Silakan pilih produk terlebih dahulu.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: textGrey,
-                  ),
+                  style: TextStyle(fontSize: 13, color: textGrey),
                 ),
               ),
             )
@@ -989,89 +770,71 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
+  String _subtitle(CartItem item) {
+    final detail = [
+      if (item.sizeLabel != null && item.sizeLabel!.isNotEmpty) item.sizeLabel!,
+      if (item.note != null && item.note!.isNotEmpty) item.note!,
+    ].join(' \u2022 ');
+    return detail.isNotEmpty ? detail : item.product.description;
+  }
+
+  Widget _gambarProduk(Product product) {
+    Widget kotak([Widget? isi]) => Container(
+      color: product.imageColor,
+      alignment: Alignment.center,
+      child: isi ?? Icon(product.imageIcon, size: 42, color: Colors.white),
+    );
+
+    final Widget gambar;
+    if (_isExtra(product)) {
+      gambar = Image.asset(
+        product.image!,
+        width: 78,
+        height: 78,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => kotak(),
+      );
+    } else if (product.imageUrl != null &&
+        product.imageUrl!.trim().isNotEmpty) {
+      gambar = Image.network(
+        product.imageUrl!,
+        width: 78,
+        height: 78,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => kotak(),
+        loadingBuilder: (_, child, loadingProgress) => loadingProgress == null
+            ? child
+            : kotak(
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+      );
+    } else {
+      gambar = kotak();
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(width: 78, height: 78, child: gambar),
+    );
+  }
+
   Widget _barisProdukKeranjang(CartItem item) {
     final product = item.product;
+    final isExtra = _isExtra(product);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: SizedBox(
-              width: 78,
-              height: 78,
-              child: product.name == extraChili.name
-                  ? Image.asset(
-                      extraChiliAsset,
-                      width: 78,
-                      height: 78,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: product.imageColor,
-                        alignment: Alignment.center,
-                        child: Icon(product.imageIcon, size: 42, color: Colors.white),
-                      ),
-                    )
-                  : product.name == blueEcobag.name
-                      ? Image.asset(
-                          blueEcobagAsset,
-                          width: 78,
-                          height: 78,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: product.imageColor,
-                            alignment: Alignment.center,
-                            child: Icon(product.imageIcon, size: 42, color: Colors.white),
-                          ),
-                        )
-                      : product.imageUrl != null && product.imageUrl!.trim().isNotEmpty
-                  ? Image.network(
-                      product.imageUrl!,
-                      width: 78,
-                      height: 78,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: product.imageColor,
-                          alignment: Alignment.center,
-                          child: Icon(
-                            product.imageIcon,
-                            size: 42,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: product.imageColor,
-                          alignment: Alignment.center,
-                          child: const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      color: product.imageColor,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        product.imageIcon,
-                        size: 42,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
-
+          _gambarProduk(product),
           const SizedBox(width: 10),
 
           Expanded(
@@ -1092,7 +855,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                         ),
                       ),
                     ),
-                    if (!_isExtra(product))
+                    if (!isExtra)
                       InkWell(
                         onTap: () => _editPesanan(product),
                         child: Padding(
@@ -1107,16 +870,13 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   ],
                 ),
 
-                if (product.description.isNotEmpty) ...[
+                if (_subtitle(item).isNotEmpty) ...[
                   const SizedBox(height: 3),
                   Text(
-                    product.description,
+                    _subtitle(item),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: textGrey,
-                    ),
+                    style: const TextStyle(fontSize: 11.5, color: textGrey),
                   ),
                 ],
 
@@ -1126,7 +886,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        rp(product.price * item.quantity),
+                        rupiah(item.total),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1137,13 +897,8 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                     _tombolStep(
                       Icons.remove,
                       red,
-                      () {
-                        if (_isExtra(product)) {
-                          _kurangiExtra(product);
-                        } else {
-                          _kurangiItem(item);
-                        }
-                      },
+                      () =>
+                          isExtra ? _kurangiExtra(product) : _kurangiItem(item),
                     ),
 
                     const SizedBox(width: 6),
@@ -1155,9 +910,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFFEAF2FB),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: const Color(0xFFD6E4F3),
-                        ),
+                        border: Border.all(color: const Color(0xFFD6E4F3)),
                       ),
                       child: Text(
                         '${item.quantity}',
@@ -1170,13 +923,9 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                     _tombolStep(
                       Icons.add,
                       navy,
-                      () {
-                        if (_isExtra(product)) {
-                          _tambahExtra(product);
-                        } else {
-                          CartManager.instance.increase(item);
-                        }
-                      },
+                      () => isExtra
+                          ? _tambahExtra(product)
+                          : CartManager.instance.increase(item),
                     ),
                   ],
                 ),
@@ -1188,11 +937,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  Widget _tombolStep(
-    IconData icon,
-    Color warna,
-    VoidCallback onTap,
-  ) {
+  Widget _tombolStep(IconData icon, Color warna, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1207,16 +952,18 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                 : const Color(0xFFBFC9D4),
           ),
         ),
-        child: Icon(
-          icon,
-          size: 15,
-          color: warna,
-        ),
+        child: Icon(icon, size: 15, color: warna),
       ),
     );
   }
 
   Widget _bannerPapiDuo() {
+    Widget kotak(Widget isi) => Container(
+      color: const Color(0xFF2E7BC4),
+      alignment: Alignment.center,
+      child: isi,
+    );
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
@@ -1227,31 +974,15 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
           width: double.infinity,
           height: 168,
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) {
-              return child;
-            }
-
-            return Container(
-              color: const Color(0xFF2E7BC4),
-              alignment: Alignment.center,
-              child: const CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: const Color(0xFF2E7BC4),
-              alignment: Alignment.center,
-              child: const Text(
-                'Gambar Papi Duo tidak dapat dimuat',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-            );
-          },
+          loadingBuilder: (_, child, loadingProgress) => loadingProgress == null
+              ? child
+              : kotak(const CircularProgressIndicator(color: Colors.white)),
+          errorBuilder: (_, _, _) => kotak(
+            const Text(
+              'Gambar Papi Duo tidak dapat dimuat',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
         ),
       ),
     );
@@ -1272,7 +1003,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
   }
 
   Widget _barisExtra(Product product) {
-    final int jumlah = _extraQuantities[product.name] ?? 0;
+    final jumlah = _qtyExtra(product);
 
     return Row(
       children: [
@@ -1286,18 +1017,12 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         Expanded(
           child: Text(
             product.name,
-            style: const TextStyle(
-              fontSize: 13.5,
-              color: Color(0xFF333333),
-            ),
+            style: const TextStyle(fontSize: 13.5, color: Color(0xFF333333)),
           ),
         ),
         Text(
-          rp(product.price),
-          style: const TextStyle(
-            fontSize: 13.5,
-            color: Color(0xFF555555),
-          ),
+          rupiah(product.price),
+          style: const TextStyle(fontSize: 13.5, color: Color(0xFF555555)),
         ),
         const SizedBox(width: 7),
         GestureDetector(
@@ -1330,6 +1055,8 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     bool bold = false,
     Color? valueColor,
   }) {
+    final berat = bold ? FontWeight.w700 : FontWeight.w600;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1337,22 +1064,15 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
           label,
           style: TextStyle(
             fontSize: 15,
-            fontWeight: bold
-                ? FontWeight.w700
-                : FontWeight.w600,
-            color: grey
-                ? const Color(0xFF555555)
-                : Colors.black,
+            fontWeight: berat,
+            color: grey ? const Color(0xFF555555) : Colors.black,
           ),
         ),
-
         Text(
           nilai,
           style: TextStyle(
             fontSize: 13,
-            fontWeight: bold
-                ? FontWeight.w700
-                : FontWeight.w600,
+            fontWeight: berat,
             color: valueColor ?? Colors.black,
           ),
         ),
@@ -1367,27 +1087,17 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: couponBorder,
-          width: 1,
-        ),
+        border: Border.all(color: couponBorder, width: 1),
       ),
       child: const Row(
         children: [
           Expanded(
             child: Text(
               'Periksa kupon',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF333333),
-              ),
+              style: TextStyle(fontSize: 16, color: Color(0xFF333333)),
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            color: Colors.black,
-            size: 24,
-          ),
+          Icon(Icons.chevron_right, color: Colors.black, size: 24),
         ],
       ),
     );
@@ -1395,22 +1105,12 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
 
   Widget _pesanUntukOrangLain() {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          pesanUntukOrangLain = !pesanUntukOrangLain;
-        });
-      },
+      onTap: () => setState(() => pesanUntukOrangLain = !pesanUntukOrangLain),
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 11,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(
-            color: borderGrey,
-            width: 1,
-          ),
+          border: Border.all(color: borderGrey, width: 1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -1421,30 +1121,42 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
               color: const Color(0xFFE3A02F),
               fallback: Icons.card_giftcard,
             ),
-
             const SizedBox(width: 12),
-
             const Expanded(
               child: Text(
                 'Pesan untuk orang lain?',
                 style: TextStyle(fontSize: 14.5),
               ),
             ),
-
             Checkbox(
               value: pesanUntukOrangLain,
               activeColor: navy,
               visualDensity: VisualDensity.compact,
-              onChanged: (value) {
-                setState(() {
-                  pesanUntukOrangLain = value ?? false;
-                });
-              },
+              onChanged: (value) =>
+                  setState(() => pesanUntukOrangLain = value ?? false),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _ikonMetode(int index, {bool kecil = false}) {
+    return switch (index) {
+      0 => _assetIcon(
+        'cod',
+        size: kecil ? 29 : 46,
+        fallback: Icons.delivery_dining,
+      ),
+      1 => _assetIcon(
+        'edc',
+        size: kecil ? 29 : 46,
+        fallback: Icons.point_of_sale,
+      ),
+      2 => _ikonGoPay(size: kecil ? 29 : 42),
+      3 => _ikonQRIS(size: kecil ? 29 : 42),
+      _ => const SizedBox.shrink(),
+    };
   }
 
   Widget _daftarMetodePembayaran() {
@@ -1454,56 +1166,16 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
         padding: const EdgeInsets.symmetric(vertical: 4),
-        children: [
-          _kartuBayar(
-            0,
-            'COD',
-            _assetIcon(
-              'cod',
-              size: 46,
-              fallback: Icons.delivery_dining,
-            ),
-          ),
-
-          _kartuBayar(
-            1,
-            'EDC',
-            _assetIcon(
-              'edc',
-              size: 46,
-              fallback: Icons.point_of_sale,
-            ),
-          ),
-
-          _kartuBayar(
-            2,
-            'GoPay',
-            _ikonGoPay(size: 42),
-          ),
-
-          _kartuBayar(
-            3,
-            'QRIS',
-            _ikonQRIS(size: 42),
-          ),
-        ],
+        children: [for (var i = 0; i < _metode.length; i++) _kartuBayar(i)],
       ),
     );
   }
 
-  Widget _kartuBayar(
-    int index,
-    String nama,
-    Widget ikon,
-  ) {
+  Widget _kartuBayar(int index) {
     final aktif = selectedPayment == index;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedPayment = index;
-        });
-      },
+      onTap: () => setState(() => selectedPayment = index),
       child: Container(
         width: 96,
         height: 132,
@@ -1513,9 +1185,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: aktif
-                ? const Color(0xFF83B2D3)
-                : const Color(0xFFE3E3E3),
+            color: aktif ? const Color(0xFF83B2D3) : const Color(0xFFE3E3E3),
             width: aktif ? 2.5 : 1,
           ),
           boxShadow: const [
@@ -1528,17 +1198,11 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         ),
         child: Column(
           children: [
-            SizedBox(
-              height: 48,
-              child: Center(child: ikon),
-            ),
+            SizedBox(height: 48, child: Center(child: _ikonMetode(index))),
             const SizedBox(height: 12),
             Text(
-              nama,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              _metode[index],
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -1546,7 +1210,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // Ikon GoPay dibuat dalam satu fungsi agar konsisten di seluruh tampilan.
   Widget _ikonGoPay({required double size}) {
     return Container(
       width: size,
@@ -1577,7 +1240,6 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
     );
   }
 
-  // Ikon QRIS menggunakan bentuk yang sama di kartu dan ringkasan.
   Widget _ikonQRIS({required double size}) {
     return Container(
       width: size,
@@ -1585,54 +1247,17 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(size * 0.17),
-        border: Border.all(
-          color: const Color(0xFF222222),
-          width: size * 0.029,
-        ),
+        border: Border.all(color: const Color(0xFF222222), width: size * 0.029),
       ),
-      child: Icon(
-        Icons.qr_code_2,
-        size: size * 0.81,
-        color: Colors.black,
-      ),
+      child: Icon(Icons.qr_code_2, size: size * 0.81, color: Colors.black),
     );
   }
 
-  Widget _ikonMetodeTerpilih() {
-    switch (selectedPayment) {
-      case 0:
-        return _assetIcon(
-          'cod',
-          size: 29,
-          fallback: Icons.delivery_dining,
-        );
-
-      case 1:
-        return _assetIcon(
-          'edc',
-          size: 29,
-          fallback: Icons.point_of_sale,
-        );
-
-      case 2:
-        return _ikonGoPay(size: 29);
-
-      case 3:
-        return _ikonQRIS(size: 29);
-
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
   Widget _barBawah() {
-    final bool belumAdaAlamat = isDelivery && !hasAddress;
-
-    final bool sudahPilihPembayaran = selectedPayment != -1;
-
-    final bool adaProduk = _jumlahSemuaItem > 0;
-
-    final bool bolehBayar =
+    final belumAdaAlamat = isDelivery && !hasAddress;
+    final sudahPilihPembayaran = selectedPayment != -1;
+    final adaProduk = _jumlahSemuaItem > 0;
+    final bolehBayar =
         hasAddressOrTakeaway && sudahPilihPembayaran && adaProduk;
 
     return Container(
@@ -1640,12 +1265,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFFEEEEEE),
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: dividerGrey, width: 1)),
       ),
       child: SafeArea(
         top: false,
@@ -1661,7 +1281,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                     width: 32,
                     height: 32,
                     child: Center(
-                      child: _ikonMetodeTerpilih(),
+                      child: _ikonMetode(selectedPayment, kecil: true),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1677,10 +1297,7 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
             else
               const Text(
                 'Silakan pilih metode pembayaran',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
               ),
 
             const SizedBox(height: 9),
@@ -1704,8 +1321,8 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
                   belumAdaAlamat
                       ? 'Select Address'
                       : !sudahPilihPembayaran
-                          ? 'Select Payment Method'
-                          : 'Pay ${rp(total)}',
+                      ? 'Select Payment Method'
+                      : 'Pay ${rupiah(total)}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1732,25 +1349,15 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
       height: size,
       fit: BoxFit.contain,
       color: color,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          fallback,
-          size: size,
-          color: color,
-        );
-      },
+      errorBuilder: (_, _, _) => Icon(fallback, size: size, color: color),
     );
   }
 
-  BoxDecoration _kartu({
-    double radius = 16,
-  }) {
+  BoxDecoration _kartu({double radius = 16}) {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(
-        color: const Color(0xFFE0E0E0),
-      ),
+      border: Border.all(color: const Color(0xFFE0E0E0)),
       boxShadow: const [
         BoxShadow(
           color: Color(0x14000000),
