@@ -14,8 +14,32 @@ class GlowBottomNav extends StatelessWidget {
     super.key,
     required this.currentIndex,
     required this.onTap,
-  });
 
+  });
+  
+Widget _icon(_NavItem item, bool aktif) {
+  final path = aktif ? item.selectedAsset : item.asset;
+
+  if (path != null) {
+    return Image.asset(
+      path,
+      width: _iconSize,
+      height: _iconSize,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stack) => Icon(
+        Icons.image_not_supported_outlined,
+        size: _iconSize,
+        color: _inactive,
+      ),
+    );
+  }
+
+  return Icon(
+    aktif ? item.selectedIcon : item.icon,
+    size: _iconSize,
+    color: aktif ? AppColors.primary : _inactive,
+  );
+}
   // ---------- KONSTANTA ----------
   static const double _topPad = 10; // atas ikon
   static const double _iconSize = 28;
@@ -28,13 +52,20 @@ class GlowBottomNav extends StatelessWidget {
   static const Color _glow = Color(0x594A9BE0);
   // --------------------------------
 
-  static const _items = <_NavItem>[
-    _NavItem('Beranda', Icons.home_outlined, Icons.home_rounded),
-    _NavItem('Menu', Icons.local_pizza_outlined, Icons.local_pizza),
-    _NavItem('Aktivitas', Icons.newspaper_outlined, Icons.newspaper),
-    _NavItem('Profil', Icons.account_circle_outlined, Icons.account_circle),
-  ];
-
+static const _items = <_NavItem>[
+  _NavItem('Beranda',
+      asset: 'assets/nav/nav_rmabu.png',
+      selectedAsset: 'assets/nav/nav_rmbiru.png'),
+  _NavItem('Menu',
+      asset: 'assets/nav/nav_menuabu.png',
+      selectedAsset: 'assets/nav/nav_menubiru.png'),
+  _NavItem('Aktivitas',
+      asset: 'assets/nav/nav_aktabu.png',
+      selectedAsset: 'assets/nav/nav_aktbiru.png'),
+  _NavItem('Profil',
+      icon: Icons.account_circle_outlined,
+      selectedIcon: Icons.account_circle),
+];
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
@@ -113,11 +144,7 @@ class GlowBottomNav extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            aktif ? item.selectedIcon : item.icon,
-            size: _iconSize,
-            color: aktif ? AppColors.primary : _inactive,
-          ),
+          _icon(item, aktif),
           const SizedBox(height: _iconLabelGap),
           Text(
             item.label,
@@ -131,7 +158,15 @@ class GlowBottomNav extends StatelessWidget {
 
 class _NavItem {
   final String label;
-  final IconData icon;
-  final IconData selectedIcon;
-  const _NavItem(this.label, this.icon, this.selectedIcon);
+  final IconData? icon;          // dipakai kalau tidak pakai gambar (Profil)
+  final IconData? selectedIcon;
+  final String? asset;           // gambar saat tidak aktif
+  final String? selectedAsset;   // gambar saat aktif
+  const _NavItem(
+    this.label, {
+    this.icon,
+    this.selectedIcon,
+    this.asset,
+    this.selectedAsset,
+  });
 }
