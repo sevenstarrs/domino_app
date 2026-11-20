@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/state/profile_state.dart';
 import '../../../data/models/user_profile.dart';
+import '../main_shell.dart';
 
 const kNavy = Color(0xFF1A4B8C);
 const kRed = Color(0xFFD4202C);
@@ -416,6 +417,14 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
+  // Buka tab Menu pada kategori yang diketuk.
+  // Urutan item = urutan DummyData.categories (Promo, Pizza, Sides, Bread,
+  // Wings, Dessert, Drinks). Item ke-8 (See All) diarahkan ke Promo.
+  void _bukaMenu(int index) {
+    menuCategoryRequest.value = index < 7 ? index : 0;
+    shellIndex.value = 1;
+  }
+
   Widget _categories() {
     // setiap item berisi ikon dan teks
     const items = [
@@ -453,7 +462,10 @@ class _BerandaState extends State<Beranda> {
         childAspectRatio: 1.05,
         children: [
           for (final item in items)
-            Column(
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _bukaMenu(items.indexOf(item)),
+              child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ClipOval(
@@ -467,6 +479,7 @@ class _BerandaState extends State<Beranda> {
                 const SizedBox(height: 4),
                 Text(item.$2, style: const TextStyle(fontSize: 11)),
               ],
+            ),
             ),
         ],
       ),
@@ -492,9 +505,16 @@ class _BerandaState extends State<Beranda> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const Text(
-                  'Lihat semua ›',
-                  style: TextStyle(fontSize: 14, color: Color(0xFF0B6FD6)),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => shellIndex.value = 1, // pindah ke tab Menu
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      'Lihat semua ›',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF0B6FD6)),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -542,11 +562,10 @@ class _BerandaState extends State<Beranda> {
       height: tinggi,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: products.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (_, i) =>
-            HorizontalProductCard(product: products[i], width: width),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: items.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 20),
+        itemBuilder: (context, i) => _productCard(items[i], lebarKartu),
       ),
     );
   }

@@ -44,7 +44,35 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    menuCategoryRequest.addListener(_onCategoryRequest);
+  }
+
+  // Dipanggil dari Beranda: buka kategori tertentu (tanpa animasi, karena tab ini
+  // sedang tersembunyi di IndexedStack saat permintaan masuk)
+  void _onCategoryRequest() {
+    final cat = menuCategoryRequest.value;
+    if (cat == null) return;
+    menuCategoryRequest.value = null;
+
+    final target = _pageMap.indexOf((cat, 0));
+    if (target < 0) return;
+
+    setState(() {
+      _cat = cat;
+      _sub = 0;
+    });
+    if (_pageController.hasClients) _pageController.jumpToPage(target);
+    if (_categoryController.hasClients) {
+      final offset = (cat - 2) * 95.0;
+      _categoryController.jumpTo(offset < 0 ? 0 : offset);
+    }
+  }
+
+  @override
   void dispose() {
+    menuCategoryRequest.removeListener(_onCategoryRequest);
     _categoryController.dispose();
     _pageController.dispose();
     super.dispose();

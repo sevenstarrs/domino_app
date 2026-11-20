@@ -13,6 +13,13 @@ class AppTheme {
           surfaceTintColor: Colors.transparent,
           indicatorColor: Colors.transparent,
           height: 72,
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            final aktif = states.contains(WidgetState.selected);
+            return IconThemeData(
+              size: 28,
+              color: aktif ? AppColors.primary : const Color(0xFF666666),
+            );
+          }),
           labelTextStyle: WidgetStateProperty.all(
             const TextStyle(fontSize: 14, color: AppColors.primary),
           ),

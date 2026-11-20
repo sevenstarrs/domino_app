@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import '../widgets/navbar_custom.dart';
 import 'activity/activity_screen.dart';
 import 'home/home_screen.dart';
 import 'menu/menu_screen.dart';
@@ -7,6 +7,10 @@ import 'profile/profile_screen.dart';
 
 /// Index tab aktif. Bisa diubah dari halaman mana saja (mis. SearchScreen).
 final ValueNotifier<int> shellIndex = ValueNotifier<int>(0);
+
+/// Permintaan membuka kategori tertentu di tab Menu (0 = Promo, 1 = Pizza, dst).
+/// Diisi dari Beranda, lalu dibaca & dikosongkan lagi oleh MenuScreen.
+final ValueNotifier<int?> menuCategoryRequest = ValueNotifier<int?>(null);
 
 /// Kerangka utama: IndexedStack + bottom navigation (4 tab)
 class MainShell extends StatefulWidget {
@@ -32,31 +36,9 @@ class _MainShellState extends State<MainShell> {
         return Scaffold(
           // IndexedStack menjaga state tiap tab (scroll position, dll)
           body: IndexedStack(index: index, children: _pages),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: index,
-            onDestinationSelected: (i) => shellIndex.value = i,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
-                label: 'Beranda',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.local_pizza_outlined),
-                selectedIcon: Icon(Icons.local_pizza),
-                label: 'Menu',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.newspaper_outlined),
-                selectedIcon: Icon(Icons.newspaper),
-                label: 'Aktivitas',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.account_circle_outlined),
-                selectedIcon: Icon(Icons.account_circle),
-                label: 'Profil',
-              ),
-            ],
+          bottomNavigationBar: GlowBottomNav(
+            currentIndex: index,
+            onTap: (i) => shellIndex.value = i,
           ),
         );
       },
