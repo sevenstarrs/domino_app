@@ -17,7 +17,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   final _pages = const [
-    HomeScreen(),
+    Beranda(),
     MenuScreen(),
     ActivityScreen(),
     ProfileScreen(),
