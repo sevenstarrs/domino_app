@@ -9,7 +9,7 @@ import 'profile/profile_screen.dart';
 final ValueNotifier<int> shellIndex = ValueNotifier<int>(0);
 
 /// Permintaan membuka kategori tertentu di tab Menu (0 = Promo, 1 = Pizza, dst).
-/// Diisi dari Beranda, lalu dibaca & dikosongkan lagi oleh MenuScreen.
+/// Diisi dari HomeScreen, lalu dibaca & dikosongkan lagi oleh MenuScreen.
 final ValueNotifier<int?> menuCategoryRequest = ValueNotifier<int?>(null);
 
 /// Kerangka utama: IndexedStack + bottom navigation (4 tab)
@@ -22,7 +22,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   final _pages = const [
-    Beranda(),
+    HomeScreen(),
     MenuScreen(),
     ActivityScreen(),
     ProfileScreen(),

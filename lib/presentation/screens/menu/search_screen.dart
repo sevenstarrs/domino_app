@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../data/dummy_data.dart';
+import '../../../data/menu_data.dart';
 import '../../../data/models/product.dart';
 import '../../widgets/menu_product_card.dart';
 import '../main_shell.dart';
@@ -28,11 +28,11 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Product> get allProducts {
     final List<Product> products = [];
 
-    for (final item in DummyData.menuProducts.values) {
+    for (final item in MenuData.menuProducts.values) {
       products.addAll(item);
     }
 
-    for (final item in DummyData.productsBySubCategory.values) {
+    for (final item in MenuData.productsBySubCategory.values) {
       products.addAll(item);
     }
 

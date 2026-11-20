@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'models/category_item.dart';
 import 'models/product.dart';
 
-class DummyData {
-  DummyData._();
+class MenuData {
+  MenuData._();
 
   // =========================
   // CATEGORY MENU

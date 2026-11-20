@@ -24,14 +24,14 @@ class Product {
   });
 }
 
-class Beranda extends StatefulWidget {
-  const Beranda({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<Beranda> createState() => _BerandaState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _BerandaState extends State<Beranda> {
+class _HomeScreenState extends State<HomeScreen> {
   final List<String> _banners = [
     'https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/0e15f01a-9da9-42db-90b3-8e8a4617cf05_Banner-PAPI-COKE.jpg',
     'https://i.gojekapi.com/darkroom/gofood-indonesia/v2/images/uploads/06d6bad3-37b2-47b8-ad23-4fffa4a997e6_Banner-PAPI-DUO.jpg',

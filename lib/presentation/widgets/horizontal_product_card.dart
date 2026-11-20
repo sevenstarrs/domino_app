@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/product.dart';
 import '../../data/cart/cart_manager.dart';
-import '../keranjang/keranjang_screen.dart';
+import '../screens/cart/cart_screen.dart';
 import 'add_button.dart';
 import 'price_text.dart';
 import 'product_image.dart';
@@ -26,7 +26,7 @@ class HorizontalProductCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const KeranjangScreen(),
+        builder: (context) => const CartScreen(),
       ),
     );
   }

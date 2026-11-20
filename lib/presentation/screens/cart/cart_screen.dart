@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../core/utils/formatter.dart';
-import '../../data/cart/cart_manager.dart';
-import '../../data/models/product.dart';
+import '../../../core/utils/formatter.dart';
+import '../../../data/cart/cart_manager.dart';
+import '../../../data/models/product.dart';
 
-class KeranjangScreen extends StatefulWidget {
-  const KeranjangScreen({super.key});
+class CartScreen extends StatefulWidget {
+  const CartScreen({super.key});
 
   @override
-  State<KeranjangScreen> createState() => _KeranjangScreenState();
+  State<CartScreen> createState() => _CartScreenState();
 }
 
-class _KeranjangScreenState extends State<KeranjangScreen> {
+class _CartScreenState extends State<CartScreen> {
   static const Color navy = Color(0xFF1B4F7C);
   static const Color disabledBlue = Color(0xFF9DC3E7);
   static const Color borderGrey = Color(0xFFDDDDDD);

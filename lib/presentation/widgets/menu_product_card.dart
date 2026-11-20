@@ -3,7 +3,7 @@ import '../../core/theme/app_colors.dart';
 import '../../data/cart_service.dart';
 import '../../data/models/product.dart';
 import '../../data/cart/cart_manager.dart';
-import '../keranjang/keranjang_screen.dart';
+import '../screens/cart/cart_screen.dart';
 import '../screens/menu/product_detail_screen.dart';
 import 'add_button.dart';
 import 'price_text.dart';
@@ -32,7 +32,7 @@ class MenuProductCard extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const KeranjangScreen(),
+        builder: (context) => const CartScreen(),
       ),
     );
   }

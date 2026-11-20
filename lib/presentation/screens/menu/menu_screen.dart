@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../data/dummy_data.dart';
+import '../../../data/menu_data.dart';
 import '../../../data/models/product.dart';
 import '../../../data/cart_service.dart';
 import '../../widgets/menu_product_card.dart';
-import '../../keranjang/keranjang_screen.dart';
+import '../cart/cart_screen.dart';
 import 'search_screen.dart';
 import 'location_screen.dart';
 import '../main_shell.dart';
@@ -29,11 +29,11 @@ class _MenuScreenState extends State<MenuScreen> {
   late final List<(int, int)> _pageMap = _buildPageMap();
 
   List<(int, int)> _buildPageMap() {
-    final cats = DummyData.categories.take(7).toList();
+    final cats = MenuData.categories.take(7).toList();
     final map = <(int, int)>[];
 
     for (var c = 0; c < cats.length; c++) {
-      final subs = DummyData.subTabs[cats[c].label] ?? const <String>[];
+      final subs = MenuData.subTabs[cats[c].label] ?? const <String>[];
       final count = subs.isEmpty ? 1 : subs.length;
 
       for (var s = 0; s < count; s++) {
@@ -330,15 +330,15 @@ class _MenuScreenState extends State<MenuScreen> {
 
   // Satu halaman PageView = daftar produk saja
   Widget _buildPage(int index) {
-    final cats = DummyData.categories.take(7).toList();
+    final cats = MenuData.categories.take(7).toList();
     final (c, s) = _pageMap[index];
     final label = cats[c].label;
 
-    final subTabs = DummyData.subTabs[label] ?? const <String>[];
+    final subTabs = MenuData.subTabs[label] ?? const <String>[];
 
     final List<Product> products = subTabs.isNotEmpty
-        ? (DummyData.productsBySubCategory[subTabs[s]] ?? const <Product>[])
-        : (DummyData.menuProducts[label] ?? const <Product>[]);
+        ? (MenuData.productsBySubCategory[subTabs[s]] ?? const <Product>[])
+        : (MenuData.menuProducts[label] ?? const <Product>[]);
 
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -370,7 +370,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const KeranjangScreen(),
+                    builder: (_) => const CartScreen(),
                   ),
                 );
               },
@@ -416,10 +416,10 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cats = DummyData.categories.take(7).toList();
+    final cats = MenuData.categories.take(7).toList();
 
     final subTabs =
-        DummyData.subTabs[cats[_cat].label] ?? const <String>[];
+        MenuData.subTabs[cats[_cat].label] ?? const <String>[];
 
     return Scaffold(
       body: SafeArea(

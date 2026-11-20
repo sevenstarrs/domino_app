@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/state/profile_state.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/user_profile.dart';
 import '../../widgets/empty_state.dart';
 
 class ActivityScreen extends StatefulWidget {
@@ -462,38 +464,48 @@ class _ActivityScreenState extends State<ActivityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Text(
-                'Aktivitas',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+        // Header (segment + filter) selalu tampil. Isi tab Memesan ikut status
+        // akun: ada profil -> daftar pesanan, belum ada / dihapus -> "Ayo pesan pizza"
+        child: ValueListenableBuilder<UserProfile?>(
+          valueListenable: ProfileState.current,
+          builder: (context, profil, _) {
+            final adaAkun = profil != null;
 
-            _segment(),
-
-            if (_tab == 0) _filterChips(),
-
-            Expanded(
-              child: _tab == 0
-                  ? _orderList()
-                  : const Center(
-                      child: Text(
-                        'No Notification Found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  child: Text(
+                    'Aktivitas',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
-            ),
-          ],
+                  ),
+                ),
+
+                _segment(),
+
+                if (_tab == 0) _filterChips(),
+
+                Expanded(
+                  child: _tab == 0
+                      // Memesan: tanpa akun -> "Ayo pesan pizza"
+                      ? (adaAkun ? _orderList() : const EmptyState())
+                      : const Center(
+                              child: Text(
+                                'No Notification Found',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
