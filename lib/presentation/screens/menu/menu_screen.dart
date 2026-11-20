@@ -4,6 +4,7 @@ import '../../../data/dummy_data.dart';
 import '../../../data/models/product.dart';
 import '../../../data/cart_service.dart';
 import '../../widgets/menu_product_card.dart';
+import '../../keranjang/keranjang_screen.dart';
 import 'search_screen.dart';
 import 'location_screen.dart';
 import '../main_shell.dart';
@@ -338,6 +339,12 @@ class _MenuScreenState extends State<MenuScreen> {
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
             child: GestureDetector(
               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const KeranjangScreen(),
+                  ),
+                );
               },
               child: Container(
                 height: 46,
@@ -410,7 +417,8 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
             ),
 
-            if (subTabs.isNotEmpty)
+            // Baris sub tab hanya tampil kalau ada lebih dari satu pilihan
+            if (subTabs.length > 1)
               _subTabs(subTabs),
 
             Expanded(

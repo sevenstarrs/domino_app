@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/cart_service.dart';
 import '../../data/models/product.dart';
+import '../../data/cart/cart_manager.dart';
+import '../keranjang/keranjang_screen.dart';
 import '../screens/menu/product_detail_screen.dart';
 import 'add_button.dart';
 import 'price_text.dart';
@@ -9,6 +11,12 @@ import 'product_image.dart';
 
 class MenuProductCard extends StatelessWidget {
   final Product product;
+
+  /// true = tombol "Tambah" membuka halaman detail (pilih ukuran/topping),
+  ///        lalu masuk keranjang lewat CartService. Tampil "N barang" kalau
+  ///        produk sudah ada di keranjang.
+  /// false = tombol "Tambah" langsung menambah 1 item ke keranjang
+  ///         dan membuka halaman Keranjang.
   final bool enableDetail;
 
   const MenuProductCard({
@@ -17,6 +25,19 @@ class MenuProductCard extends StatelessWidget {
     this.enableDetail = false,
   });
 
+  // Mode cepat: tambah 1 item lalu buka halaman Keranjang.
+  void _tambahKeKeranjang(BuildContext context) {
+    CartManager.instance.add(product);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const KeranjangScreen(),
+      ),
+    );
+  }
+
+  // Mode detail: buka halaman detail produk.
   void _openDetail(BuildContext context) {
     Navigator.push(
       context,
@@ -26,6 +47,8 @@ class MenuProductCard extends StatelessWidget {
     );
   }
 
+  // Tombol "Tambah" memakai AddButton asli. Kalau produk sudah ada di
+  // keranjang, tampil "N barang" dengan ukuran yang sama.
   Widget _actionButton(BuildContext context) {
     return ValueListenableBuilder<List<CartLine>>(
       valueListenable: CartService.instance.lines,
@@ -94,8 +117,7 @@ class MenuProductCard extends StatelessWidget {
             height: 128,
             width: double.infinity,
           ),
-
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           Text(
             product.name,
@@ -137,7 +159,11 @@ class MenuProductCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  enableDetail ? _actionButton(context) : const AddButton(),
+                  enableDetail
+                      ? _actionButton(context)
+                      : AddButton(
+                          onPressed: () => _tambahKeKeranjang(context),
+                        ),
 
                   if (product.customizable) ...[
                     const SizedBox(height: 4),
