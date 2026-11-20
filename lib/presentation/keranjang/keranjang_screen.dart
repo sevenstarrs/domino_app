@@ -794,6 +794,16 @@ class _KeranjangScreenState extends State<KeranjangScreen> {
         fit: BoxFit.contain,
         errorBuilder: (_, _, _) => kotak(),
       );
+    } else if (product.image != null && product.image!.trim().isNotEmpty) {
+      // foto asset yang sama dengan yang tampil di halaman Menu
+      gambar = Image.asset(
+        product.image!,
+        width: 78,
+        height: 78,
+        fit: BoxFit.cover,
+        cacheWidth: 300,
+        errorBuilder: (_, _, _) => kotak(),
+      );
     } else if (product.imageUrl != null &&
         product.imageUrl!.trim().isNotEmpty) {
       gambar = Image.network(
