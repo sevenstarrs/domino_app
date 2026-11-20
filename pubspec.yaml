@@ -64,6 +64,16 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/icons_home/
+    - assets/bread.jpeg
+    - assets/dessert.webp
+    - assets/drinks.webp
+    - assets/pizza.webp
+    - assets/promo.webp
+    - assets/see_all.jpg
+    - assets/sides.webp
+    - assets/wings.webp
+    - assets/promo_icon.png
+    - assets/titik outline.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
