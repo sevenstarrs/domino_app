@@ -12,19 +12,11 @@ String rupiahText(int value) {
   return 'Rp $b';
 }
 
-/// Satu baris di keranjang: satu produk + satu ukuran + satu ringkasan pilihan.
 class CartLine {
   final Product product;
   final int quantity;
-
-  /// Ukuran yang dipilih, misalnya "5 Pieces" atau "390 ml".
   final String? sizeLabel;
-
-  /// Harga satuan (sudah termasuk ukuran dan topping tambahan).
   final int unitPrice;
-
-  /// Ringkasan pilihan: isi paket promo, atau daftar topping pizza.
-  /// Boleh null. Tampilkan sebagai teks kecil di bawah nama produk.
   final String? note;
 
   const CartLine(
@@ -38,14 +30,6 @@ class CartLine {
   int get total => unitPrice * quantity;
 }
 
-/// Keranjang bersama untuk seluruh aplikasi.
-/// Teman yang mengerjakan halaman Keranjang cukup memakai:
-///   CartService.instance.lines   (ValueListenable berisi List of CartLine)
-///   CartService.instance.totalItems / totalPrice
-///   CartService.instance.setQuantity(...) / remove(...) / clear()
-/// Pakai line.unitPrice dan line.total untuk harga (jangan product.price),
-/// line.sizeLabel untuk ukuran, dan line.note untuk ringkasan pilihan.
-/// Saat memanggil setQuantity/remove, berikan sizeLabel dan note dari line.
 class CartService {
   CartService._();
   static final CartService instance = CartService._();
@@ -58,7 +42,6 @@ class CartService {
   bool _same(CartLine l, Product p, String? sizeLabel, String? note) =>
       l.product.name == p.name && l.sizeLabel == sizeLabel && l.note == note;
 
-  /// Jumlah semua varian dari produk ini (dipakai tombol "N barang" di kartu).
   int quantityOf(Product p) {
     var total = 0;
     for (final l in lines.value) {
@@ -67,8 +50,6 @@ class CartService {
     return total;
   }
 
-  /// Tambah produk. Kalau produk + ukuran + pilihan yang sama sudah ada,
-  /// jumlahnya ditambah.
   void add(
     Product p,
     int qty, {
@@ -99,7 +80,6 @@ class CartService {
     lines.value = list;
   }
 
-  /// Ubah jumlah. Kalau qty <= 0, baris dihapus.
   void setQuantity(Product p, int qty, {String? sizeLabel, String? note}) {
     if (qty <= 0) {
       remove(p, sizeLabel: sizeLabel, note: note);
@@ -127,7 +107,6 @@ class CartService {
   void clear() => lines.value = [];
 }
 
-/// Daftar produk favorit (tombol hati). Disimpan berdasarkan nama produk.
 class FavoriteService {
   FavoriteService._();
   static final FavoriteService instance = FavoriteService._();

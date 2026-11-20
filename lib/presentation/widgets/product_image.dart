@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Gambar produk. Kalau [image] diisi, tampil gambar dari asset.
-/// Kalau kosong (atau file tidak ditemukan), tampil placeholder berwarna + ikon.
 class ProductImage extends StatelessWidget {
   final Color color;
   final IconData icon;
   final double? height;
   final double? width;
   final double radius;
-  final String? image; // [BARU] path asset, contoh 'assets/images/products/papi_duo.jpg'
+  final String? image; 
 
   const ProductImage({
     super.key,
@@ -17,12 +15,11 @@ class ProductImage extends StatelessWidget {
     this.height,
     this.width,
     this.radius = 12,
-    this.image, // [BARU]
+    this.image, 
   });
 
   @override
   Widget build(BuildContext context) {
-    // Placeholder lama (gradient + ikon)
     final placeholder = Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -47,7 +44,6 @@ class ProductImage extends StatelessWidget {
                 image!,
                 fit: BoxFit.cover,
                 cacheWidth: 800,
-                //errorBuilder: (_, __, ___) => placeholder,
               ),
       ),
     );

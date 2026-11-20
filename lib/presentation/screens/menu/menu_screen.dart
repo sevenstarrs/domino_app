@@ -20,19 +20,12 @@ class _MenuScreenState extends State<MenuScreen> {
   int _cat = 0;
   int _sub = 0;
 
-  // Kategori yang tombol "Tambah"-nya membuka halaman detail
   static const _detailCategories = {'Promo', 'Pizza', 'Sides', 'Bread', 'Wings', 'Dessert', 'Drinks'};
   final ScrollController _categoryController = ScrollController();
-
-  // PageView mengikuti jari saat di-swipe
   final PageController _pageController = PageController();
 
-  // true selama animasi pindah halaman dari tap kategori / sub tab,
-  // supaya onPageChanged tidak mengubah _cat/_sub di halaman yang dilewati
   bool _isAnimating = false;
 
-  // Daftar datar semua halaman: (indexKategori, indexSubTab).
-  // Contoh: Promo(0,0), Pizza(1,0..3), Sides(2,0..1), dst.
   late final List<(int, int)> _pageMap = _buildPageMap();
 
   List<(int, int)> _buildPageMap() {
@@ -330,7 +323,7 @@ class _MenuScreenState extends State<MenuScreen> {
         );
       },
     );
-  } // <-- penutup _buildPage
+  }
 
   // Bar hijau "N barang di keranjang" (muncul kalau keranjang tidak kosong)
   Widget _cartBar() {
@@ -436,11 +429,11 @@ class _MenuScreenState extends State<MenuScreen> {
                     itemCount: _pageMap.length,
                     onPageChanged: _onPageChanged,
                     itemBuilder: (_, index) => _buildPage(index),
-                  ), // penutup PageView
+                  ), 
                   _cartBar(),
-                ], // penutup children Stack
-              ), // penutup Stack
-            ), // penutup Expanded
+                ], 
+              ), 
+            ), 
           ],
         ),
       ),

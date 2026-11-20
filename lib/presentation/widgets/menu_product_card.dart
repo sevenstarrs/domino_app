@@ -63,7 +63,6 @@ class MenuProductCard extends StatelessWidget {
               : Stack(
                   alignment: Alignment.center,
                   children: [
-                    // AddButton tak terlihat, hanya untuk menyamakan ukuran
                     const Opacity(
                       opacity: 0,
                       child: IgnorePointer(child: AddButton()),
@@ -103,7 +102,7 @@ class MenuProductCard extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: AppColors.border,
         ),
@@ -115,7 +114,7 @@ class MenuProductCard extends StatelessWidget {
             color: product.imageColor,
             icon: product.imageIcon,
             image: product.image,
-            height: 130,
+            height: 128,
             width: double.infinity,
           ),
           const SizedBox(height: 12),
@@ -186,8 +185,6 @@ class MenuProductCard extends StatelessWidget {
     );
 
     if (!enableDetail) return card;
-
-    // Seluruh kartu bisa ditekan untuk membuka detail
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => _openDetail(context),

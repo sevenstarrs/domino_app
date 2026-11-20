@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Halaman "Lokasi / Toko Terdekat" (tampilan saja, tidak ada fungsi lokasi).
-/// Hanya tombol kembali (panah) yang berfungsi.
 class LocationScreen extends StatelessWidget {
   const LocationScreen({super.key});
 
@@ -263,10 +261,18 @@ class LocationScreen extends StatelessWidget {
                                     color: Color(0xFFF2F2F2),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
-                                    Icons.location_on_outlined,
-                                    size: 50,
-                                    color: Color(0xFF5F5F5F),
+                                  child: Center(
+                                    child: Image.asset(
+                                      'assets/images/titik outline.png',
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, _, _) => const Icon(
+                                        Icons.location_on_outlined,
+                                        size: 60,
+                                        color: Color(0xFF5F5F5F),
+                                      ),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 22),
@@ -294,7 +300,7 @@ class LocationScreen extends StatelessWidget {
                                   width: 200,
                                   height: 40,
                                   child: OutlinedButton(
-                                    onPressed: () {}, // tidak berfungsi
+                                    onPressed: () {}, 
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: Colors.black,
                                       side: const BorderSide(

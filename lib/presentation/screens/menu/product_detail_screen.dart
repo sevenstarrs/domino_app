@@ -4,14 +4,9 @@ import '../../../data/cart_service.dart';
 import '../../../data/models/product.dart';
 import '../../widgets/product_image.dart';
 
-// Gambar bawaan (taruh file-nya di assets/images/)
 const String kDefaultSizeImage = 'assets/images/bag.jpeg';
 const String kDefaultCrustImage = 'assets/images/tiket.png';
 
-/// Satu halaman detail untuk semua produk.
-/// - Produk biasa (Sides, Bread, Wings, Dessert, Drinks): Size + Crust
-/// - Produk dengan Product.promoItems: tampilan paket promo ("Pilih pizza Anda")
-/// - Produk dengan Product.toppings: Size + Crust + daftar Topping
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
@@ -32,7 +27,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       .clamp(0, widget.product.sizeOptions.length - 1)
       .toInt();
 
-  // index topping yang tercentang (topping "Bebas" tercentang dari awal)
   late final Set<int> _selected = {
     for (var i = 0; i < widget.product.toppings.length; i++)
       if (widget.product.toppings[i].free) i,
@@ -43,7 +37,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   ProductSize get _size => widget.product.sizeOptions[_sizeIndex];
 
-  // pilihan crust mengikuti ukuran yang dipilih
   List<CrustOption> get _crusts {
     final c = _size.crusts;
     return c.isEmpty ? [CrustOption(widget.product.crustName)] : c;
@@ -52,11 +45,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   CrustOption get _crust =>
       _crusts[_crustIndex.clamp(0, _crusts.length - 1).toInt()];
 
-  // harga topping mengikuti ukuran yang dipilih
   int _toppingPrice(Topping t) =>
       t.price ?? _size.toppingPrice ?? widget.product.toppingPrice;
 
-  // total harga topping berbayar yang dicentang
   int get _extra {
     if (!_hasToppings) return 0;
     var sum = 0;
@@ -67,12 +58,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return sum;
   }
 
-  // harga satuan = ukuran + crust + topping tambahan
   int get _unitPrice =>
       (_size.price ?? widget.product.price) + _crust.price + _extra;
   int get _total => _unitPrice * _qty;
 
-  // ringkasan pilihan untuk keranjang (isi promo, crust, dan topping)
   String? get _note {
     if (_isPromo) {
       return widget.product.promoItems
@@ -222,24 +211,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             // ikon ukuran dari asset (kalau tidak ada, pakai ikon bawaan)
             CircleAvatar(
-              radius: 20,
+              radius: 22,
               backgroundColor: const Color(0xFFF2F2F2),
               child: ClipOval(
                 child: Image.asset(
                   s.image ?? kDefaultSizeImage,
-                  width: 55,
-                  height: 55,
+                  width: 40,
+                  height: 40,
                   fit: BoxFit.contain,
                   errorBuilder: (_, _, _) =>
                       Icon(s.icon, size: 20, color: s.iconColor),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               s.label,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -269,7 +258,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         children: [
           Image.asset(
             c.image ?? kDefaultCrustImage,
-            width: 22,
+            width: 50,
             height: 22,
             fit: BoxFit.contain,
             errorBuilder: (_, _, _) => const Icon(
@@ -278,7 +267,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               color: Colors.black87,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 0),
           Expanded(
             child: Text(
               c.name,
@@ -315,7 +304,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final crusts = _crusts;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.only(
+      left: 0,
+      right: 10,
+      top: 10,
+      bottom: 10,
+    ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -338,7 +332,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF2AA3DE), width: 2),
       ),
       child: Column(
@@ -352,9 +346,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 icon: item.imageIcon,
                 image: item.image,
                 radius: 8,
-                height: 135,
+                height: 150,
                 width: double.infinity,
               ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: 60,
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0),
+                          Colors.white.withValues(alpha: 0.65),
+                          Colors.white,
+                        ],
+                        stops: const [0.0, 0.6, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // badge panah atas
               Positioned(
                 top: 4,
                 right: 6,
@@ -375,7 +392,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ],
           ),
           const SizedBox(height: 10),
-
           // nama + tombol Mengubah (hanya tampilan)
           Row(
             children: [
@@ -415,7 +431,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           // kotak abu Size + Crust
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
@@ -425,11 +441,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               children: [
                 const Text(
                   'Size',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8A8A8A)),
+                  style: TextStyle(fontSize: 15, color: Color(0xFF8A8A8A)),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Container(
-                  height: 40,
+                  height: 46,
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEAEAEA),
@@ -468,11 +484,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 const SizedBox(height: 12),
                 const Text(
                   'Crust',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8A8A8A)),
+                  style: TextStyle(fontSize: 15, color: Color(0xFF8A8A8A)),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Container(
-                  height: 38,
+                  height: 44,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -503,7 +519,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   // ---------------- PIZZA: baris topping ----------------
-  // gambar yang dipakai semua topping (kecuali topping yang punya image sendiri)
   static const String _defaultToppingImage = 'assets/images/toping.png';
 
   // Lingkaran kecil topping (gambar atau warna)
@@ -551,7 +566,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       behavior: HitTestBehavior.opaque,
       onTap: () => _toggleTopping(i),
       child: SizedBox(
-        height: 31,
+        height: 33,
         child: Row(
           children: [
             _toppingDot(t),
@@ -561,7 +576,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 t.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14),
+                style: const TextStyle(fontSize: 15),
               ),
             ),
             const SizedBox(width: 8),
@@ -569,7 +584,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               t.free ? 'Bebas' : '+${rupiahText(_toppingPrice(t))}',
               style: TextStyle(
                 fontSize: 14,
-                color: t.free ? AppColors.green : const Color(0xFF8A8A8A),
+                color: t.free ? AppColors.green : const Color.fromARGB(255, 0, 0, 0),
               ),
             ),
             const SizedBox(width: 10),
@@ -642,7 +657,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     p.description.replaceAll('-', '\u2011'),
                     style: const TextStyle(
@@ -714,7 +729,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 if (!_loading) {
                                   setState(() {
                                     _sizeIndex = i;
-                                    _crustIndex = 0; // crust ikut direset
+                                    _crustIndex = 0; 
                                   });
                                 }
                               },
@@ -727,19 +742,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                     // ================= CRUST =================
                     _heading('Crust'),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     _crustList(),
 
                     // ================= TOPPING (khusus pizza) =================
                     if (_hasToppings) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _heading('Topping'),
                       const SizedBox(height: 4),
                       Text(
                         'Topping maksimal hanya ${p.maxToppings} untuk dipilih',
                         style: const TextStyle(fontSize: 14),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
@@ -760,7 +775,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ],
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 15),
                 ],
               ),
             ),
