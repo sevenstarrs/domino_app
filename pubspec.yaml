@@ -63,6 +63,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/icons_home/
     - assets/bread.jpeg
     - assets/dessert.webp
     - assets/drinks.webp
