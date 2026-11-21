@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../data/menu_data.dart';
 import '../../../data/models/product.dart';
 import '../../widgets/menu_product_card.dart';
+import '../../widgets/navbar_custom.dart';
 import '../main_shell.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -174,134 +175,10 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
 
-      bottomNavigationBar: Container(
-        height: 92,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 15,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceAround,
-                children: [
-                  _MenuItem(
-                    icon: Icons.home_outlined,
-                    label: 'Beranda',
-                    selected: false,
-                    onTap: () => _goToTab(0), 
-                  ),
-                  _MenuItem(
-                    icon: Icons.local_pizza_outlined,
-                    label: 'Menu',
-                    selected: true,
-                    onTap: () => _goToTab(1), 
-                  ),
-                  _MenuItem(
-                    icon: Icons.receipt_long_outlined,
-                    label: 'Aktivitas',
-                    selected: false,
-                    onTap: () => _goToTab(2), 
-                  ),
-                  _MenuItem(
-                    icon: Icons.person_outline,
-                    label: 'Profil',
-                    selected: false,
-                    onTap: () => _goToTab(3), 
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      bottomNavigationBar: GlowBottomNav(
+        currentIndex: 1, // tab Menu
+        onTap: _goToTab,
       ),
     );
   }
 }
-
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque, 
-      onTap: onTap,
-      child: SizedBox(
-      width: 80,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 26,
-                  color: selected
-                      ? const Color(0xFF003B71)
-                      : const Color(0xFF8A8A8A),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFF003B71),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          if (selected)
-            Positioned(
-              bottom: 14,
-              child: Container(
-                width: 78,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: selected
-                  ? const Color(0xFF003B71)
-                  : const Color(0xFF8A8A8A),
-                  borderRadius:
-                      BorderRadius.circular(100),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color.fromARGB(102, 1, 69, 132),
-                      blurRadius: 20,
-                      spreadRadius: 4.5,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-  }
