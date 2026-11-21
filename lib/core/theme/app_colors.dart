@@ -12,4 +12,6 @@ class AppColors {
   static const textGrey = Color(0xFF8A8A8A);
   static const strike = Color(0xFFE0606B);
   static const softBlue = Color(0xFFEAF3FB);
+  static const navy = Color(0xFF1A4B8C); // dulu kNavy (Beranda)
+  static const redDeep = Color(0xFFD4202C); // dulu kRed (Beranda)
 }

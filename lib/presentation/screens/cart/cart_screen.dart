@@ -134,57 +134,6 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Future<void> _tambahAlamat() async {
-    final controller = TextEditingController(text: alamatPengiriman);
-
-    final hasil = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Tambah alamat pengiriman',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-        ),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: 'Masukkan alamat lengkap',
-            hintStyle: const TextStyle(fontSize: 13),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(9)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final value = controller.text.trim();
-              if (value.isNotEmpty) Navigator.pop(ctx, value);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: navy,
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-
-    controller.dispose();
-    if (!mounted || hasil == null) return;
-
-    setState(() {
-      alamatPengiriman = hasil;
-      hasAddress = true;
-      isDelivery = true;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -421,8 +370,8 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // "Kirim ke": sementara tidak ada reaksi saat diketuk
           GestureDetector(
-            onTap: _tambahAlamat,
             child: Container(
               constraints: const BoxConstraints(minHeight: 38),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -708,25 +657,6 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _extraQuantities[product.name] = _qtyExtra(product) + 1);
   }
 
-  void _editPesanan(Product product) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Edit Pesanan'),
-        content: Text(
-          'Untuk mengubah pilihan ${product.name}, silakan pilih kembali produk melalui menu.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OKE'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _kartuRingkasanPesanan() {
     final items = <CartItem>[
       ...CartManager.instance.items,
@@ -866,15 +796,13 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                     if (!isExtra)
-                      InkWell(
-                        onTap: () => _editPesanan(product),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 5),
-                          child: _assetIcon(
-                            'edit',
-                            size: 21,
-                            fallback: Icons.edit_outlined,
-                          ),
+                      // ikon edit: sementara tidak ada reaksi saat diketuk
+                      Padding(
+                        padding: const EdgeInsets.only(left: 5),
+                        child: _assetIcon(
+                          'edit',
+                          size: 21,
+                          fallback: Icons.edit_outlined,
                         ),
                       ),
                   ],

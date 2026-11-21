@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/state/profile_state.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../data/cart_service.dart';
+import '../../../data/menu_data.dart';
+import '../../../data/models/product.dart' as model;
 import '../../../data/models/user_profile.dart';
+import '../../widgets/cart_bar.dart';
+import '../menu/product_detail_screen.dart';
 import '../main_shell.dart';
-
-const kNavy = Color(0xFF1A4B8C);
-const kRed = Color(0xFFD4202C);
-const kRedPudar = Color(0xFFE57373); 
 
 class Product {
   final String title;
@@ -48,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
   Timer? _timer;
   bool _takeaway = true;   // true = Takeaway, false = Delivery
-  int _cart = 0;
   bool get _isLogin => ProfileState.current.value != null;
   
   String get _sapaan {
@@ -180,7 +181,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return ValueListenableBuilder<UserProfile?>(
       valueListenable: ProfileState.current,
       builder: (context, profil, _) {
-        return ListView(
+        return Stack(
+          children: [
+            ListView(
         padding: EdgeInsets.zero,
         children: [
           _hero(),
@@ -202,6 +205,16 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               ),
             ),
+            // ruang tambahan di bawah supaya konten tidak tertutup bar keranjang
+            ValueListenableBuilder<List<CartLine>>(
+              valueListenable: CartService.instance.lines,
+              builder: (_, lines, _) =>
+                  SizedBox(height: lines.isEmpty ? 0 : 80),
+            ),
+          ],
+        ),
+            // bar keranjang (sama seperti di tab Menu)
+            const CartBar(),
           ],
         );
        },
@@ -401,8 +414,8 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.symmetric(vertical: 6),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: aktif ? kNavy : Colors.white,
-          border: Border.all(color: aktif ? kNavy : const Color(0xFFCCD2DA)),
+          color: aktif ? AppColors.navy : Colors.white,
+          border: Border.all(color: aktif ? AppColors.navy : const Color(0xFFCCD2DA)),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -544,17 +557,121 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _addToCart(Product p) {
-  setState(() => _cart++);
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text('${p.title} ditambahkan ($_cart item)'),
-        duration: const Duration(seconds: 1),
-      ),
+  // Cari produk Beranda di data Menu (berdasarkan nama). Hanya yang ada di
+  // tab Menu (Promo / Pizza / Sides / dst) yang punya halaman detail.
+  // Kalau tidak ketemu -> null -> tombol Tambah tidak bereaksi.
+  model.Product? _cariDiMenu(String title) {
+    final nama = title.trim().toLowerCase();
+    bool cocok(model.Product p) => p.name.trim().toLowerCase() == nama;
+
+    for (final list in MenuData.menuProducts.values) {
+      for (final p in list) {
+        if (cocok(p)) return p;
+      }
+    }
+    for (final list in MenuData.productsBySubCategory.values) {
+      for (final p in list) {
+        if (cocok(p)) return p;
+      }
+    }
+    return null;
+  }
+
+  void _bukaDetail(model.Product produk) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ProductDetailScreen(product: produk)),
     );
-}
+  }
+
+  // Tombol "Tambah" Beranda.
+  // - produk ada di Menu  : buka halaman detail; kalau sudah ada di keranjang
+  //                         tampil "N barang"
+  // - produk tidak ada    : tombol tetap tampil tapi tidak bereaksi
+  Widget _tombolTambah(Product p, {bool penuh = false}) {
+    final produk = _cariDiMenu(p.title);
+
+    if (produk == null) {
+      return SizedBox(
+        width: penuh ? double.infinity : null,
+        child: FilledButton(
+          onPressed: () {}, // tidak ada reaksi
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.navy,
+            minimumSize: const Size(0, 26),
+            padding: penuh
+                ? EdgeInsets.zero
+                : const EdgeInsets.symmetric(horizontal: 16),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          child: const Text(
+            'Tambah',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+        ),
+      );
+    }
+
+    return ValueListenableBuilder<List<CartLine>>(
+      valueListenable: CartService.instance.lines,
+      builder: (_, _, _) {
+        final qty = CartService.instance.quantityOf(produk);
+
+        if (qty == 0) {
+          return SizedBox(
+            width: penuh ? double.infinity : null,
+            child: FilledButton(
+              onPressed: () => _bukaDetail(produk),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                minimumSize: const Size(0, 26),
+                padding: penuh
+                    ? EdgeInsets.zero
+                    : const EdgeInsets.symmetric(horizontal: 16),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                'Tambah',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
+          );
+        }
+
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _bukaDetail(produk),
+          child: Container(
+            width: penuh ? double.infinity : null,
+            height: 26,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                '$qty barang',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   // list geser ke samping
   Widget _productList(List<Product> items, double lebarKartu, {double tinggi = 245}) {
@@ -620,7 +737,7 @@ class _HomeScreenState extends State<HomeScreen> {
             p.oldPrice,
             style: const TextStyle(
               fontSize: 13,
-              color: kRed,                        // merah lebih pudar
+              color: AppColors.redDeep,                        // merah lebih pudar
               decoration: TextDecoration.lineThrough,
             ),
           ),
@@ -631,26 +748,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
 
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => _addToCart(p),
-              style: FilledButton.styleFrom(
-                backgroundColor: kNavy,
-                minimumSize: const Size(0, 26),                // 34 -> 30
-                padding: EdgeInsets.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-              child: const Text(
-                'Tambah',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
+          _tombolTambah(p, penuh: true),
         ],
       ),
     );
@@ -723,7 +821,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   p.oldPrice,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: kRed,
+                    color: AppColors.redDeep,
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
@@ -736,23 +834,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // tombol Tambah di kanan
                 Align(
                   alignment: Alignment.centerRight,
-                  child: FilledButton(
-                    onPressed: () => _addToCart(p),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: kNavy,
-                      minimumSize: const Size(0, 26),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    child: const Text(
-                      'Tambah',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                  ),
+                  child: _tombolTambah(p),
                 ),
               ],
             ),
@@ -771,14 +853,14 @@ class _HomeScreenState extends State<HomeScreen> {
         gradient: const SweepGradient(
           center: Alignment.center,
           colors: [
-            kNavy,
-            kNavy,
+            AppColors.navy,
+            AppColors.navy,
             Color(0xFFDCE8F5),   // terang #1 (bawah, agak kiri)
-            kNavy,
-            kNavy,
+            AppColors.navy,
+            AppColors.navy,
             Color(0xFFDCE8F5),   // terang #2 (atas, agak kanan)
-            kNavy,
-            kNavy,
+            AppColors.navy,
+            AppColors.navy,
           ],
           stops: [0.0, 0.34, 0.41, 0.48, 0.84, 0.91, 0.98, 1.0],
         ),
@@ -802,7 +884,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'assets/icons_home/promo_icon.png',
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.confirmation_number, color: kNavy, size: 22),
+                        const Icon(Icons.confirmation_number, color: AppColors.navy, size: 22),
                   ),
                 ),
                 SizedBox(width: 12),
@@ -812,7 +894,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: kNavy,
+                      color: AppColors.navy,
                     ),
                   ),
                 ),
